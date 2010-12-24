@@ -1,0 +1,9 @@
+export( tableplot
+      , tableGUI
+	  , num2fac
+	  )
+
+import( grid
+      , RColorBrewer
+	  , plyr
+      )
