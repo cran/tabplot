@@ -1,5 +1,5 @@
 preprocess.data.frame <-
-function(dat, colNames, sortCol,  decreasing, scales, nBins, from, to) {
+function(dat, colNames, sortCol,  decreasing, scales, palet, nBins, from, to) {
 
 
 	n <- length(colNames)
@@ -44,7 +44,7 @@ function(dat, colNames, sortCol,  decreasing, scales, nBins, from, to) {
 	#####################
 	
 	# create random vector
-	rand <- sample.int(nrow(dat))
+	rand <- sample.int(nrow(dat), nrow(dat))
 	
 	# put all columns that are sorted in a list, and if decreasing, then change sign ('order' cannot handle a vectorized decreasing)
 	datList <- mapply(as.list(dat[sortCol]), decreasing, isNumber[sortCol], FUN=function(vec, decr, isNum) {
@@ -110,8 +110,9 @@ function(dat, colNames, sortCol,  decreasing, scales, nBins, from, to) {
 	tab$scales <- scales
 	tab$isNumber <- isNumber
 	## tab$row contains info about bins/y-axis
-	tab$rows <- list( heights = binSizes/vp$m 
-	                , y = c(0,cumsum(binSizes/vp$m)[-nBins])
+
+	tab$rows <- list( heights = -(binSizes/vp$m)
+	                , y = 1- c(0,cumsum(binSizes/vp$m)[-nBins])
 	                , m = vp$m
 	                , from = from
 	                , to = to
@@ -120,6 +121,7 @@ function(dat, colNames, sortCol,  decreasing, scales, nBins, from, to) {
 	
 	## create column list
 	tab$columns <- list()
+	paletNr <- 1
 	for (i in 1:n) {
 		sortc <- ifelse(i %in% sortCol, ifelse(decreasing[which(i==sortCol)], "decreasing", "increasing"), "")
 		col <- list(name = colNames[i], isnumeric = isNumber[i], sort=sortc)
@@ -129,6 +131,8 @@ function(dat, colNames, sortCol,  decreasing, scales, nBins, from, to) {
 		} else {
 			col$freq <- datFreq[[colNames[i]]]$freqTable
 			col$categories <- datFreq[[colNames[i]]]$categories
+			col$palet <- palet[paletNr]
+			paletNr <- ifelse(paletNr==length(palet), 1, paletNr + 1)
 		}
 		tab$columns[[i]] <- col
 	}

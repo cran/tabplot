@@ -46,7 +46,7 @@ plotNumCol <- function(tCol, tab, blues, vpTitle, vpGraph, vpLegend){
 				 , width = unit(0.75, "points")
 				 , height = tab$rows$heights
 				 , just=c("left","bottom")
-				 , gp = gpar(col=NA, fill = blues[length(blues) + 1])
+				 , gp = gpar(col=NA, fill = blues[length(blues)])
 				 )
 
 		
@@ -88,7 +88,7 @@ plotCatCol <- function(tCol, tab, colorpalet, vpTitle, vpGraph, vpLegend){
 	cellplot(2,1,vpGraph, {
 
 		## determine color indices for categories
-		colorID <- rep(2:(length(colorpalet)+1), length.out=length(tCol$categories))
+		colorID <- rep(2:length(colorpalet), length.out=length(tCol$categories))
 		if (tail(tCol$categories, 1)=="missing") {
 			colorID[length(colorID)] <- 1
 		}
@@ -113,21 +113,36 @@ plotCatCol <- function(tCol, tab, colorpalet, vpTitle, vpGraph, vpLegend){
 	## draw layout
 	cellplot(3,1, vpLegend, {
 
-		Layout2 <- grid.layout(nrow = length(tCol$categories), ncol = 1)
+		anyNA <- tail(tCol$categories, 1)=="missing"
+		nCategories <- length(tCol$categories) - anyNA
+		nLegendRows <- nCategories + 2 * anyNA
+		
+		Layout2 <- grid.layout(nrow = nLegendRows, ncol = 1)
 
-		cex <- min(1, 1 / (convertHeight(unit(1,"lines"), "npc", valueOnly=TRUE) * length(tCol$categories)))
+		cex <- min(1, 1 / (convertHeight(unit(1,"lines"), "npc", valueOnly=TRUE) * nLegendRows))
 
 		pushViewport(viewport(name="legendblocks", layout = Layout2, gp=gpar(cex=cex)))
 		#print(current.vpPath())
 		grid.rect(gp=gpar(col=NA, fill="white"))
 		
-		for (j in 1:length(tCol$categories)) {
+		for (j in 1:nCategories) {
 			cellplot(j,1, NULL, {
 				grid.rect( x = 0, y = 0.5, width = 0.2, height = 1
 						 , just=c("left")
 						 , gp = gpar(col=NA, fill = colorpalet[colorID][j])
 						 )
 				grid.text( tCol$categories[j]
+						 , x = 0.25
+						 , just="left")
+			})
+		}
+		if (anyNA) {
+			cellplot(nLegendRows,1, NULL, {
+				grid.rect( x = 0, y = 0.5, width = 0.2, height = 1
+						 , just=c("left")
+						 , gp = gpar(col=NA, fill = colorpalet[colorID][nCategories + 1])
+						 )
+				grid.text( tCol$categories[nCategories + 1]
 						 , x = 0.25
 						 , just="left")
 			})
@@ -156,12 +171,7 @@ function(tab) {
 	set1 <- brewer.pal(9,"Set1")[2:9]
 	set2 <- brewer.pal(8,"Set2")[c(1:6,8,7)]
 	
-	color <- list()
-	color[[1]] <- c(red, set1, set2) 
-	color[[2]] <- c(red, set2, set1)
-	color[[3]] <- c(red, set1[3:8], set2, set1[1:2])
-	color[[4]] <- c(red, set2[2:8], set1, set2[1])
-		
+	color <- c(red, set1, set2)
 	
 	#############################
 	## Set layout
@@ -223,9 +233,9 @@ function(tab) {
 			## percentages ticks
 			rests <- formatC(tab$rows$marks - floor(tab$rows$marks))	
 			digits <- max(0,(max(sapply(rests, FUN=nchar))-2))
-			marksChar <- formatC(tab$rows$marks, format="f", digits=digits)
+			marksChar <- paste(formatC(tab$rows$marks, format="f", digits=digits),"%", sep="")
 			
-			ticks <- seq(0, 1, length.out=length(tab$rows$marks))
+			ticks <- seq(1, 0, length.out=length(tab$rows$marks))
 			grid.polyline(x=c(0.80,0.80,rep(c(0.75,0.80),length(ticks))),y=c(0,1,rep(ticks,each=2)),id=rep(1:(length(ticks)+1),each=2))
 			
 			## percentages labels
@@ -248,8 +258,6 @@ function(tab) {
 	## Draw columns from left to right. Per column, check whether it is numeric or categorial.
 	#############################
 
-	## count that is used to switch color palets for categorical variables.
-	palet <- 1
 	for (i in 1:tab$n) {
 		cellplot(1,i+1, vpColumn, {
 			tCol <- tab$columns[[i]]
@@ -267,17 +275,25 @@ function(tab) {
 
 				## Place sorting arrow before name
 				if (tCol$sort!="") {
-					arrowX <- min(0.1, 0.45 - 0.5 * nameWidth * cex)
-					grid.lines(x=rep(arrowX, 2), y=c(0.7,0.2), arrow=arrow(angle = 20, length = unit(0.3, "npc"),ends = ifelse(tCol$sort=="decreasing", "first", "last"), type = "open"))
+					grid.polygon( x = c(0.1, 0.4, 0.7)
+					            , y = if (tCol$sort=="decreasing") 
+									     c(0.6, 0.2, 0.6)
+								      else
+						                 c(0.2, 0.6, 0.2)
+							    , gp = gpar(fill="black")
+							    , default.units = "snpc"
+							    )
 				}
 			})
 		
 			if (tCol$isnumeric){
-			   plotNumCol(tCol, tab, blues, vpTitle, vpGraph, vpLegend)
+				plotNumCol(tCol, tab, blues, vpTitle, vpGraph, vpLegend)
 			}
 			else {
-			   plotCatCol(tCol, tab, color[[palet]], vpTitle, vpGraph, vpLegend)
-			   palet <- ifelse(palet==4, 1, palet+1)
+				catPalet <- color[c(1, (tCol$palet+1):length(color))]
+				if (tCol$palet > 1) catPalet <- c(catPalet, color[2:(tCol$palet+1)])
+			
+				plotCatCol(tCol, tab, catPalet, vpTitle, vpGraph, vpLegend)
 			}
 		})
 	}
