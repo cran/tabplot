@@ -1,18 +1,17 @@
 if (require(ggplot2)){   
-   diamondsNA <- diamonds
-   # simulate missing data
-   is.na(diamondsNA$price) <- diamondsNA$cut == "Ideal"
-
-   tableplot(diamondsNA)
-   
-   # add categorical price variable
-   diamondsNA$price5 <- num2fac(diamondsNA$price, method="kmeans", num_scale="log", n=5)
-   diamondsNA <- diamondsNA[c(1:7,11,8:10)]
-   
-   tableplot(diamondsNA)
-
-   # zoom in
-   tableplot(diamondsNA, scales="lin", from = 0, to = 10)
+	# simulate missing data
+	diamondsNA <- diamonds
+	is.na(diamondsNA$price) <- diamondsNA$cut == "Ideal"
+	
+	tableplot(diamondsNA)
+	
+	# correlation between carat and price 
+	diamondsNA <-	transform(diamondsNA, pricePerCarat = price/carat, carat_cat= num2fac(carat))
+	tableplot(diamondsNA, colNames=c("carat", "carat_cat", "cut", "price", "pricePerCarat"))
+	
+	# closer look at the top 5 percent most expensive diamonds
+	tableplot(diamondsNA, colNames=c("carat", "carat_cat", "cut", "color", "clarity", "price", "pricePerCarat"), sortCol="price", from=0, to=5)
+	
 }
 
 irisNA <- iris

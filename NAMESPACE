@@ -1,9 +1,8 @@
-export( tableplot
-      , tableGUI
-	  , num2fac
-	  )
-
-import( grid
-      , RColorBrewer
-	  , plyr
-      )
+export(changeTabplot)
+export(datetime2fac)
+export(num2fac)
+export(plot.tabplot)
+export(summary.tabplot)
+export(tableGUI)
+export(tableplot)
+export(tableplot_showPalettes)
