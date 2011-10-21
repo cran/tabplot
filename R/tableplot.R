@@ -1,23 +1,24 @@
-#' Visualization of large multivariate datasets.
+#' Create a tableplot
 #'
-#' A tableplot is a visualisation of a (large) multivariate dataset. Each column represents a variable and each row bin is an aggregate of a certain number of records. For numeric variables, a bar chart of the mean values is depicted. For categorical variables, a stacked bar chart is depicted of the proportions of categories. Missing values are taken into account. Also supports large ffdf datasets from the ff package. Use \code{\link{tableGUI}} to customize this function with a GUI.
+#' A tableplot is a visualisation of (large) multivariate datasets. Each column represents a variable and each row bin is an aggregate of a certain number of records. For numeric variables, a bar chart of the mean values is depicted. For categorical variables, a stacked bar chart is depicted of the proportions of categories. Missing values are taken into account. Also supports large ffdf datasets from the ff package.
 #'
-#' @aliases tableplot
 #' @param dat a \code{\link{data.frame}}, \code{\link{data.table}}, or an \code{\link[ff:ffdf]{ffdf}} object (required)
 #' @param colNames character vector containing the names of the columns of \code{dat} that are visualized in the tablelplot. If omitted, all columns are visualized. All selected columns should be of class: numeric, integer, factor, or logical.
 #' @param sortCol columns that are sorted. \code{sortCol} is either a vector of column names of a vector of indices of \code{colNames}
 #' @param decreasing determines whether the columns are sorted decreasingly (TRUE) of increasingly (FALSE). \code{decreasing} can be either a single value that applies to all sorted columns, or a vector of the same length as \code{sortCol}.
-#' @param scales determines the horizontal axes of the numeric variables in \code{colNames}, options: "lin", "log", and "auto" for automatic detection. If necessary, \code{scales} is recycled.
-#' @param pals list of color palettes. Each list item is on of the following:
-#' \itemize{
-#' \item a index number between 1 and 16. In this case, the default palette is used with the index number being the first color that is used.
-#' \item a palette name in \code{\link{tabplotPalettes}}, optionally with the starting color between brackets.
-#' \item a palette vector
-#' }
-#' The items of \code{pals} are applied to the categorical variables of \code{colNames}. If necessary, \code{pals} is recycled.
 #' @param nBins number of row bins
 #' @param from percentage from which the data is shown
 #' @param to percentage to which the data is shown
+#' @param filter filter condition to subset the observations in \code{dat}, either a character or an expression. It is also possible to give the name of a categorical variable: then, a tableplot for each category is generated.
+#' @param scales determines the horizontal axes of the numeric variables in \code{colNames}, options: "lin", "log", and "auto" for automatic detection. If necessary, \code{scales} is recycled.
+#' @param pals list of color palettes. Each list item is on of the following:
+#' \itemize{
+#' \item a palette name in \code{\link{tablePalettes}}, optionally with the starting color between brackets.
+#' \item a palette vector
+#' }
+#' The items of \code{pals} are applied to the categorical variables of \code{colNames}. If necessary, \code{pals} is recycled.
+#' @param colorNA color for missing values
+#' @param numPals name(s) of the palette(s) that is(are) used for numeric variables ("Blues", "Greys", or "Greens"). Recycled if necessary.
 #' @param bias_brokenX parameter between 0 en 1 that determines when the x-axis of a numeric variable is broken. If minimum value is at least \code{bias_brokenX} times the maximum value, then X axis is broken. To turn off broken x-axes, set \code{bias_brokenX=1}.
 #' @param IQR_bias parameter that determines when a logarithmic scale is used when \code{scales} is set to "auto". The argument \code{IQR_bias} is multiplied by the interquartile range as a test.
 #' @param plot boolean, to plot or not to plot a tableplot
@@ -25,17 +26,54 @@
 #' @return \link{tabplot-object} (silent output)
 #' @export
 #' @keywords visualization
-#' @example examples/tableplot.R
-
-
-# TO DO:
-# @param filter variable name(s) on which the tableplot is filtered
-
-
-tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, scales="auto", pals=list(1, 9, 3, 10), nBins=100, from=0, to=100, bias_brokenX=0.8, IQR_bias=5, plot=TRUE, ...) {
+#' @example ../examples/tableplot.R
+tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBins=100, from=0, to=100, filter=NULL, scales="auto", pals=list("Set1", "Set2", "Set3", "Set4"), colorNA = "#FF1414", numPals = "Blues", bias_brokenX=0.8, IQR_bias=5, plot=TRUE, ...) {
 
 	datName <- deparse(substitute(dat))
 	if (class(dat)[1]=="data.frame") dat <- data.table(dat)
+	
+	#####################################
+	## Filter data
+	#####################################
+	if (!is.null(filter)) {
+		if (!(class(filter)[1] %in% c("character", "expression"))) stop("<filter> is not an expression nor a character")
+		
+		# split by one variable
+		if (filter %in% names(dat)) {
+			filter <- as.character(filter)
+			lvls <- levels(dat[[filter]])
+			
+			if ((class(dat[[filter]])[1]=="logical") || (class(dat)[1]=="ffdf" && vmode(dat[[filter]]) %in% c("boolean", "logical"))) {
+				isLogical <- TRUE
+				lvls <- c("TRUE", "FALSE")
+			} else {
+				isLogical <- FALSE
+			}
+			if (is.null(lvls)) stop("filter variable is not categorical")
+			exprChar <- paste(filter, " == ", ifelse(isLogical, "", "\""), lvls, ifelse(isLogical, "", "\""), sep="")
+			expr <- lapply(exprChar, FUN=function(x)parse(text=x))
+			
+			tabs <- lapply(expr, FUN=function(e){
+				tab <- tableplot(dat, colNames=colNames, sortCol=sortCol, decreasing=decreasing, scales=scales, pals=pals, nBins=nBins, from=from, to=to, filter=e, bias_brokenX=bias_brokenX, IQR_bias=IQR_bias, plot=plot, ...)
+				tab
+			})
+			return(tabs)
+		}
+		
+		# other filters
+		if (class(filter)[1]=="character") filter <- parse(text=filter)
+		if (class(dat)[1]=="ffdf") {
+			sel <- bit(nrow(dat))
+			for (i in chunk(dat)) {
+				sel[i] <- eval(filter, dat[i,])
+			}
+			dat <- subset(dat, sel)
+		} else {
+			sel <- eval(filter, dat)
+			dat <- dat[sel,]
+		}
+		
+	}
 	
 	#####################################
 	## Check arguments and cast dat-columns to numeric or factor
@@ -70,6 +108,14 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, sca
 	## Check palet indices
 	pals <- tableplot_checkPals(pals)
 	
+	## Check colorNA
+	if (class(try(col2rgb(colorNA), silent=TRUE))=="try-error") {
+		stop("<colorNA> is not correct")
+	}
+	
+	## Check numPals
+	if ((class(numPals)!="character") || !all(numPals %in% c("Blues", "Greens", "Greys"))) stop("<numPals> is not correct")
+	
 	## Check nBins
 	nBins <- tableplot_checkBins(nBins, nrow(dat))
 	
@@ -86,7 +132,11 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, sca
 	#### Preprocess
 	##########################
 
-	tab <- preprocess(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from,to)
+	tab <- preprocess(dat, datName, as.character(filter), colNames, sortCol,  decreasing, scales, pals, colorNA, numPals, nBins, from,to)
+	
+	# delete cloned ffdf (those with filter)
+	if (!is.null(filter) && class(dat)[1]=="ffdf") delete(dat)
+
 	
 	isNumber <- tab$isNumber
 	
@@ -153,14 +203,14 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, sca
 	for (i in which(!isNumber)) {
 		categories <- tab$columns[[i]]$categories
 		widths <- tab$columns[[i]]$freq / rep(tab$binSizes, length(categories))
-		
+	
 		x <- cbind(0,(t(apply(widths, 1, cumsum)))[, -length(categories)])
 		tab$columns[[i]]$categories <- categories
 		tab$columns[[i]]$x <- x
 		tab$columns[[i]]$widths <- widths
 	}
 
-
+	
 	#############################
 	## Numeric variables
 	#############################

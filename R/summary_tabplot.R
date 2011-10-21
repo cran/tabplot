@@ -1,10 +1,11 @@
-#' Summary of a \link{tabplot-object}.
+#' Summarize a \link{tabplot-object}
 #'
 #' @aliases summary.tabplot
 #' @param object tabplot object
 #' @param digits integer, used for number formatting with \code{\link{format}()}
 #' @param ... arguments passed to other methods
 #' @export
+#' @method summary tabplot
 summary.tabplot <- 
 function(object, digits = max(3, getOption("digits") - 
     3), ...) {

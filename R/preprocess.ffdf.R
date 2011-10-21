@@ -1,9 +1,8 @@
 preprocess.ffdf <-
-function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from, to) {
+function(dat, datName, filterName, colNames, sortCol,  decreasing, scales, pals, colorNA, numPals, nBins, from, to) {
    if (!require(ff)){
 		stop("This function needs package ff")
    }   
-
 	n <- length(colNames)
 
 	#############################
@@ -13,11 +12,13 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	for (i in which(isLogical)) {
 		levels(dat[,i]) <- c("TRUE", "FALSE")
 	}
-	
+
+	isBoolean <- vmode(dat) == "boolean"
+
 	isFactor <- sapply(physical(dat), is.factor)	
 	
 	## find numerical variables
-	isNumber <- !isFactor & !isLogical
+	isNumber <- !isFactor & !isLogical & !isBoolean
 	
 	## cast logical columns to factors
 	#TODO
@@ -30,6 +31,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	#####################################
 	
 	## Determine viewport, and check if nBins is at least number of items
+   
 	vp <- tableViewport(nrow(dat), from, to)
 	if (nBins > vp$m) nBins <- vp$m
 
@@ -80,7 +82,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	#####################
 	## Aggregate numeric variables
 	#####################
-	if (sum(isNumber)>0) {
+	if (any(isNumber)) {
 		
 		numcols <- names(dat)[as.which(isNumber)] # needed because isNumber is otherwise recycled!!
 		
@@ -102,7 +104,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 			datCompl <- rbind(datCompl, dcompl)
 		}
 
-		datSum <- datSum[, lapply(.SD, sum), by=aggIndex][!is.na(aggIndex),]
+		datSum <- tail(datSum[, lapply(.SD, sum), by=aggIndex], nBins) #to exclude aggIndex=NA
 		datSum$binSizes <- binSizes[datSum$aggIndex]
 		
 		datCompl <- datCompl[, lapply(.SD, sum), by=aggIndex][!is.na(aggIndex),]
@@ -118,8 +120,8 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	#####################
 	## Aggregate categorical variables
 	#####################
-	if (any(!isNumber)) {
-		catcols <- names(dat)[as.which(!isNumber)] # needed because isNumber is otherwise recycled!!
+	if (any(isFactor | isLogical)) {
+		catcols <- names(dat)[as.which(isFactor | isLogical)] # needed because isNumber is otherwise recycled!!
 
 
 		datFreq <- list()
@@ -130,20 +132,20 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 		
 		cdat <- dat[chunks[[1]], c(catcols, "aggIndex")]
 		# cast logicals to factors
-		for (i in colNames[isLogical]) {
-			cdat[[i]] <- factor(cdat[[i]], levels=c("TRUE", "FALSE"))
+		for (col in colNames[isLogical]) {
+			cdat[[col]] <- factor(cdat[[col]], levels=c("TRUE", "FALSE"))
 		}
 
-		datFreq <- lapply(cdat[, catcols], FUN=getFreqTable_DT, cdat$aggIndex, nBins, useNA="always")
+		datFreq <- lapply(cdat[, catcols], FUN=getFreqTable_DT, cdat$aggIndex, useNA="always")
 	
 		for (i in chunks[-1]){
 			cdat <- dat[i, c(catcols, "aggIndex")]
 			# cast logicals to factors
-			for (i in colNames[isLogical]) {
-				cdat[[i]] <- factor(cdat[[i]], levels=c("TRUE", "FALSE"))
+			for (col in colNames[isLogical]) {
+				cdat[[col]] <- factor(cdat[[col]], levels=c("TRUE", "FALSE"))
 			}
 
-			datFreq2 <- lapply(cdat[, catcols], FUN=getFreqTable_DT, cdat$aggIndex, nBins, useNA="always")
+			datFreq2 <- lapply(cdat[, catcols], FUN=getFreqTable_DT, cdat$aggIndex, useNA="always")
 
 			datFreq <- mapply(datFreq, datFreq2, FUN=function(df1, df2){
 					return(list(freqTable=df1$freqTable + df2$freqTable, categories=df1$categories))
@@ -159,7 +161,46 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 				return(df)
 			}, SIMPLIFY=FALSE)
 	}	
+
+  	#####################
+	## Aggregate boolean variables (not logical!)
+	#####################
+	if (any(isBoolean)) {
+		#browser()
+		blncols <- names(dat)[as.which(isBoolean)] # needed because isNumber is otherwise recycled!!
+				
+		
+		datFreqB <- list()
+		
+		chunks <- chunk(dat)
+		
+		
+		
+		for (i in chunks){
+			cdat <- na.omit(data.table(dat[i,])[, c(blncols, "aggIndex"), with=FALSE]) # works because there are no NA's in data (only in aggIndex)
+			setkey(cdat, aggIndex)
+			dsum <- cdat[, lapply(.SD, function(x)sum(x, na.rm=TRUE)), by=aggIndex]
+
+			datFreqB2 <- lapply(dsum[, blncols, with=FALSE], FUN=function(x){
+					y <- unlist(x)
+					list(freqTable=matrix(c(y, binSizes-y), ncol=2), categories=c("TRUE", "FALSE"))
+				})
+
+			if (length(datFreqB)==0)
+				datFreqB <- datFreqB2
+			else
+				datFreqB <- mapply(datFreqB, datFreqB2, FUN=function(df1, df2){
+						return(list(freqTable=df1$freqTable + df2$freqTable, categories=df1$categories))
+				}, SIMPLIFY=FALSE)
 	
+		}
+	
+		if (exists("datFreq"))
+			datFreq <- c(datFreq, datFreqB)
+		else
+			datFreq <- datFreqB
+	}   
+   
 	#############################
 	##
 	## Create list object that contains all data needed to plot
@@ -169,6 +210,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	
 	tab <- list()
 	tab$dataset <- datName
+	tab$filter <- filterName
 	tab$n <- n
 	tab$nBins <- nBins
 	tab$binSizes <- binSizes
@@ -186,6 +228,8 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	tab$columns <- list()
 	paletNr <- 1
 	scales <- rep(scales, length.out=sum(isNumber))
+	numP <- rep(numPals, length.out=sum(isNumber))
+
 	scalesNr <- 1
 	for (i in 1:n) {
 		sortc <- ifelse(i %in% sortCol, ifelse(decreasing[which(i==sortCol)], "decreasing", "increasing"), "")
@@ -197,16 +241,18 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 			#col$lower <- datLower[[colNames[i]]]
 			#col$upper <- datUpper[[colNames[i]]]
 			col$scale_init <- scales[scalesNr]
+			col$paletname <- numP[scalesNr]
 			scalesNr <- scalesNr + 1
 		} else {
 			col$freq <- datFreq[[colNames[i]]]$freqTable
 			col$categories <- datFreq[[colNames[i]]]$categories
 			col$paletname <- pals$name[paletNr]
 			col$palet <- pals$palette[[paletNr]]
+			col$colorNA <- colorNA
+
 			paletNr <- ifelse(paletNr==length(pals$name), 1, paletNr + 1)
 		}
  		tab$columns[[i]] <- col
 	}
-	
 	return(tab)
 }

@@ -1,19 +1,25 @@
-plotCatCol <- function(tCol, tab, colorpalet, vpTitle, vpGraph, vpLegend){
-	isCairo <- (names(dev.cur())=="Cairo")
+plotCatCol <- function(tCol, tab, vpTitle, vpGraph, vpLegend){
+	drawContours <- TRUE
 	
 	cellplot(2,1,vpGraph, {
 
 		## determine color indices for categories
-		colorID <- rep(2:length(colorpalet), length.out=length(tCol$categories))
+		
+			
+			
+		palet <- rep(tCol$palet, length.out = length(tCol$categories))
 		if (tail(tCol$categories, 1)=="missing") {
-			colorID[length(colorID)] <- 1
+			palet[length(tCol$categories)] <- tCol$colorNA
 		}
 		
 		## create large vector of colors (one color for each bin*category
-		colorset <- colorpalet[rep(colorID, each=tab$nBins)]
+		colorset <- rep(palet, each=tab$nBins)
+	
+		missings <- which(tCol$widths==0)
 		
-		if (isCairo) {
+		if (drawContours) {
 			cols <- colorset
+			cols[missings] <- NA
 		} else {
 			cols <- NA
 		}
@@ -22,7 +28,10 @@ plotCatCol <- function(tCol, tab, colorpalet, vpTitle, vpGraph, vpLegend){
 		grid.rect( x = tCol$x, y = tab$rows$y
 				 , width = tCol$widths, height = tab$rows$heights
 				 , just=c("left","bottom")
-				 , gp = gpar(col=cols, fill = colorset, linejoin="mitre"))
+				 , gp = gpar(col=cols, fill = colorset, linejoin="mitre", lwd=0))
+		
+		## draw white rect at the right to correct for rounding errors during plotting
+		grid.rect(x = 1,  y=-.005, width=0.1, height=1.01, just=c("left", "bottom"), gp=gpar(col=NA, fill="white"))
 	})
 
 
@@ -45,7 +54,7 @@ plotCatCol <- function(tCol, tab, colorpalet, vpTitle, vpGraph, vpLegend){
 			cellplot(j,1, NULL, {
 				grid.rect( x = 0, y = 0.5, width = 0.2, height = 1
 						 , just=c("left")
-						 , gp = gpar(col=NA, fill = colorpalet[colorID][j])
+						 , gp = gpar(col=palet[j], fill = palet[j])
 						 )
 				grid.text( tCol$categories[j]
 						 , x = 0.25
@@ -56,7 +65,7 @@ plotCatCol <- function(tCol, tab, colorpalet, vpTitle, vpGraph, vpLegend){
 			cellplot(nLegendRows,1, NULL, {
 				grid.rect( x = 0, y = 0.5, width = 0.2, height = 1
 						 , just=c("left")
-						 , gp = gpar(col=NA, fill = colorpalet[colorID][nCategories + 1])
+						 , gp = gpar(col=palet[nCategories + 1], fill = palet[nCategories + 1])
 						 )
 				grid.text( tCol$categories[nCategories + 1]
 						 , x = 0.25

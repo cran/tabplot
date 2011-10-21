@@ -1,5 +1,5 @@
 preprocess.data.table <-
-function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from, to) {
+function(dat, datName, filterName, colNames, sortCol,  decreasing, scales, pals, colorNA, numPals, nBins, from, to) {
 
 	n <- length(colNames)
 
@@ -120,7 +120,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	## Aggregate categorical variables
 	#####################
 	if (any(!isNumber)) {	
-		datFreq <- lapply(dat[, colNames[!isNumber], with=FALSE], FUN=getFreqTable_DT, dat$aggIndex, nBins)
+		datFreq <- lapply(dat[, colNames[!isNumber], with=FALSE], FUN=getFreqTable_DT, dat$aggIndex)
 	}
 	
 	
@@ -132,6 +132,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	
 	tab <- list()
 	tab$dataset <- datName
+	tab$filter <- filterName
 	tab$n <- n
 	tab$nBins <- nBins
 	tab$binSizes <- binSizes
@@ -149,6 +150,7 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 	tab$columns <- list()
 	paletNr <- 1
 	scales <- rep(scales, length.out=sum(isNumber))
+	numP <- rep(numPals, length.out=sum(isNumber))
 	scalesNr <- 1
 	for (i in 1:n) {
 		sortc <- ifelse(i %in% sortCol, ifelse(decreasing[which(i==sortCol)], "decreasing", "increasing"), "")
@@ -159,12 +161,14 @@ function(dat, datName, colNames, sortCol,  decreasing, scales, pals, nBins, from
 			col$lower <- datLower[[colNames[i]]]
 			col$upper <- datUpper[[colNames[i]]]
 			col$scale_init <- scales[scalesNr]
+			col$paletname <- numP[scalesNr]
 			scalesNr <- scalesNr + 1
 		} else {
 			col$freq <- datFreq[[colNames[i]]]$freqTable
 			col$categories <- datFreq[[colNames[i]]]$categories
 			col$paletname <- pals$name[paletNr]
 			col$palet <- pals$palette[[paletNr]]
+			col$colorNA <- colorNA
 			paletNr <- ifelse(paletNr==length(pals$name), 1, paletNr + 1)
 		}
  		tab$columns[[i]] <- col

@@ -1,18 +1,16 @@
-#' Function that creates a factor vector out of a date-time vector.
+#' Create a factor vector out of a date-time vector
 #'
-#' Creates a factor vector out of a date-time vector that an inherits from class "POSIXt" or "Date".
+#' Create a factor vector out of a date-time vector from class "POSIXt" or "Date".
 #'
-#' @aliases datetime2fac
+#' The range \code{rng} is cut according to different pretty rounded time periods. The cut with the number of levels that is closest to 6 is chosen. Vector \code{p} is cut accordingly. Values of \code{p} outside \code{rng} are translated to \code{NA}.
 #' @param p date-time vector
-#' @return A factor vector
+#' @param rng range of the factor. 
+#' @return A factor vector. 
 #' @export
 #' @note \code{ff} vectors are not implemented yet
-datetime2fac <- function(p) {
+datetime2fac <- function(p, rng=range(p, na.rm=TRUE)) {
 
 	if (!inherits(p, c("Date", "POSIXt"))) stop(paste(parse(substitute(p)), "is not a valid date/time vector"))
-
-	rng <- range(p)
-
 
 	cutSteps <- c(
 		paste(c(50, 20, 10, 5, 4, 2, 1), "year"),
@@ -47,8 +45,16 @@ datetime2fac <- function(p) {
 		startDT <- trunc(rng[1], "secs") else startDT <- rng[1]
 	p[length(p)+1] <- startDT
 	
+
+	preDates <- which(p<rng[1])
+	postDates <- which(p>rng[2])
+
+	p[preDates] <- NA
+	p[postDates ] <- NA
+
 	p2 <- cut(p, breaks=cutSteps[idealStpIndex])
 	p2 <- p2[1:(length(p2)-1)]
+
 	if (idealStpIndex <= 9) levels(p2) <- substr(levels(p2), 1, 7) # shown only years and months
 	if (idealStpIndex <= 7) {
 		# shown year intervals
@@ -56,6 +62,18 @@ datetime2fac <- function(p) {
 		interval <- (as.numeric(levels(p2)[2]) - as.numeric(levels(p2)[1])) - 1
 		levels(p2) <- paste(levels(p2), "-", as.numeric(levels(p2)) + interval, sep = "")
 	}
+
+	if (length(preDates)>0) {
+		preLevel <- paste("<", levels(p2)[1])
+		p2 <- factor(p2, levels=c(preLevel , head(levels(p2), -1)))
+		p2[preDates] <- preLevel 
+	}	
+
+	if (length(postDates)>0) {
+		postLevel <- paste(">", tail(levels(p2), 1))
+		p2 <- factor(p2, levels=c(head(levels(p2), -1), postLevel))
+		p2[preDates] <- postLevel
+	}	
 
 	return(p2)
 }
