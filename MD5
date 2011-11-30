@@ -1,4 +1,4 @@
-555239ab76e3c0a7f26a1c4024fe30ad *DESCRIPTION
+fdf4a7b08811c51a7a27e9a3dd5c692e *DESCRIPTION
 f0fe1bb5ef60334dcea80b14d1ab918b *NAMESPACE
 55b7d01a17f4f20e0e7ae74517b6bd79 *R/brokenX.R
 33e9c742bfb01949de3a1daf3b076b6f *R/cellplot.R
@@ -14,7 +14,7 @@ df2530ed6d90f280418963b462a63fef *R/pkg.R
 8c4b53e59344c150fed4be3af7884399 *R/plot_tabplot.r
 dfdf6cc13dce8ef4c18fcaec38bc5a83 *R/preprocess.R
 76ccf71e60a819f592b85e8b5ea002a4 *R/preprocess.data.table.R
-3788dd054baa4bf92e879686679912be *R/preprocess.ffdf.R
+02121531d0fefa5b7b2753099629d499 *R/preprocess.ffdf.R
 956cbb67d79b4074536d3a7443eb298b *R/print_tabplot.R
 223aa4ebae5a5527cbacb95b9b342461 *R/subset.R
 eb1be483f2249e4c645c76731e0d4a28 *R/summary_tabplot.R
@@ -39,8 +39,8 @@ ce01bb529235d2febc14da01b8e452c5 *inst/doc/algorithmic.sty
 b0adcaf6e795a698fff297e3cd0440a4 *inst/doc/algorithmicx.sty
 8dfffa296b2349618eda3a914290b6aa *inst/doc/algpseudocode.sty
 8d6423cd4d7ba12301fdf2ab82eb27cd *inst/doc/enumitem.sty
-e16885d7f1802a9ca72220fc37dda267 *inst/doc/tabplot-vignette.Rnw
-4322da4e1446390c7520d66b3dbfe220 *inst/doc/tabplot-vignette.pdf
+db15c7ba71271664f65e9f89f1ee9949 *inst/doc/tabplot-vignette.Rnw
+a5361623e230be52c54b60be9cdcd0c6 *inst/doc/tabplot-vignette.pdf
 b1f6939603eb591618cae0d45a28d460 *inst/doc/threeparttable.sty
 ac12efdd2325e5e3c2777130601fbabf *inst/tests/testTableplot.R
 ec5c56fb08f408890b878e6ecbaddb95 *man/datetime2fac.Rd
