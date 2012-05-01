@@ -2,10 +2,10 @@
 \alias{plot.tabplot}
 \title{Plot a \link{tabplot-object}}
 \usage{
-  \method{plot}{tabplot} (x, fontsize = 8, legend.lines =
-  8, title = ifelse(length(x$filter) == 0, x$dataset,
-  paste(x$dataset, " (", x$filter, ")", sep = "")),
-  showTitle = FALSE, ...)
+  \method{plot}{tabplot} (x, fontsize = 8,
+    legend.lines = 8,
+    title = ifelse(length(x$filter) == 0, x$dataset, paste(x$dataset, " (", x$filter, ")", sep = "")),
+    showTitle = FALSE, ...)
 }
 \arguments{
   \item{x}{\link{tabplot-object}}

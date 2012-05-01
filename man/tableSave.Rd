@@ -2,17 +2,19 @@
 \alias{tableSave}
 \title{Save a tableplot}
 \usage{
-  tableSave(tab, filename = paste(tab$dataset, ".pdf", sep
-  = ""), device = default_device(filename), path = NULL,
-  scale = 1, width = par("din")[1], height = par("din")[2],
-  dpi = 300, fontsize = 8, legend.lines = 8, title =
-  tab$dataset, showTitle = FALSE, ...)
+  tableSave(tab,
+    filename = paste(tab$dataset, ".pdf", sep = ""),
+    device = default_device(filename), path = NULL,
+    scale = 1, width = par("din")[1],
+    height = par("din")[2], dpi = 300, fontsize = 8,
+    legend.lines = 8, title = tab$dataset,
+    showTitle = FALSE, ...)
 }
 \arguments{
   \item{tab}{a \link{tabplot-object}}
 
-  \item{filename}{filename with extention (pdf, eps, wmf,
-  png, jpg, bmp, or tiff)}
+  \item{filename}{filename with extention (pdf, eps, svg,
+  wmf, png, jpg, bmp, or tiff)}
 
   \item{device}{device, automatically extracted from
   filename extension}
@@ -40,12 +42,13 @@
   \item{...}{other arguments passed to graphics device}
 }
 \description{
-  Save a tableplot in pdf, eps, wmf, png, jpg, bmp, or tiff
-  format.
+  Save a tableplot in pdf, eps, svg, wmf, png, jpg, bmp, or
+  tiff format.
 }
 \examples{
-\dontrun{
-	# load diamonds dataset from ggplot2
+# load diamonds dataset from ggplot2:
+
+# Not run:
 	require(ggplot2)
 	data(diamonds)
 	
@@ -54,7 +57,8 @@
 	
 	# save tableplot
 	tableSave(tab, filename="diamonds.png")
-}
+# End(Not run)
+	
 }
 \keyword{save}
 \keyword{tableplot}

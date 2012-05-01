@@ -3,11 +3,11 @@
 \title{Create a tableplot}
 \usage{
   tableplot(dat, colNames = names(dat), sortCol = 1,
-  decreasing = TRUE, nBins = 100, from = 0, to = 100,
-  filter = NULL, scales = "auto", pals = list("Set1",
-  "Set2", "Set3", "Set4"), colorNA = "#FF1414", numPals =
-  "Blues", bias_brokenX = 0.8, IQR_bias = 5, plot = TRUE,
-  ...)
+    decreasing = TRUE, nBins = 100, from = 0, to = 100,
+    filter = NULL, scales = "auto",
+    pals = list("Set1", "Set2", "Set3", "Set4"),
+    colorNA = "#FF1414", numPals = "Blues",
+    bias_brokenX = 0.8, IQR_bias = 5, plot = TRUE, ...)
 }
 \arguments{
   \item{dat}{a \code{\link{data.frame}},

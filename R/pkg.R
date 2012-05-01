@@ -3,8 +3,8 @@
 #' \tabular{ll}{
 #' Package: \tab tabplot\cr
 #' Type: \tab Package\cr
-#' Version: \tab 0.11\cr
-#' Date: \tab 2011-10-13\cr
+#' Version: \tab 0.11-2\cr
+#' Date: \tab 2012-05-01\cr
 #' License: \tab GPL-3\cr
 #' LazyLoad: \tab yes\cr
 #' }
@@ -20,8 +20,9 @@
 #' Further, a graphical user interface has been implemented in the package \code{tabplotGTK}
 #'
 #' @name tabplot-package
+#' @aliases tabplot
 #' @docType package
 #' @author Martijn Tennekes \email{mtennekes@@gmail.com} and Edwin de Jonge
-#' @keywords visualization, large datasets
+#' @keywords visualization large datasets
 #' @example ../examples/pkg.R
 {}

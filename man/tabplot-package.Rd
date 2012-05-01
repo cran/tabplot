@@ -1,11 +1,13 @@
 \docType{package}
 \name{tabplot-package}
+\alias{tabplot}
 \alias{tabplot-package}
 \title{Tableplot, a visualization of large datasets}
 \description{
   \tabular{ll}{ Package: \tab tabplot\cr Type: \tab
-  Package\cr Version: \tab 0.11\cr Date: \tab 2011-10-13\cr
-  License: \tab GPL-3\cr LazyLoad: \tab yes\cr }
+  Package\cr Version: \tab 0.11-2\cr Date: \tab
+  2012-05-01\cr License: \tab GPL-3\cr LazyLoad: \tab
+  yes\cr }
 }
 \details{
   A tableplot is a visualisation of a (large) dataset. Each
@@ -40,5 +42,5 @@ tableplot(diamonds)
 }
 \keyword{datasets}
 \keyword{large}
-\keyword{visualization,}
+\keyword{visualization}
 

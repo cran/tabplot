@@ -5,7 +5,7 @@ function(dat, datName, filterName, colNames, sortCol,  decreasing, scales, pals,
    }   
 	n <- length(colNames)
 
-	#############################
+   #############################
 	## Determine column classes
 	#############################
 	isLogical <- vmode(dat) == "logical"
@@ -15,8 +15,9 @@ function(dat, datName, filterName, colNames, sortCol,  decreasing, scales, pals,
 
 	isBoolean <- vmode(dat) == "boolean"
 
-	isFactor <- sapply(physical(dat), is.factor)	
-	
+   #isFactor <- sapply(physical(dat), is.factor)	
+    isFactor <- sapply(physical(dat), function(x)nlevels(x)!=0)	
+   
 	## find numerical variables
 	isNumber <- !isFactor & !isLogical & !isBoolean
 	
@@ -109,10 +110,10 @@ function(dat, datName, filterName, colNames, sortCol,  decreasing, scales, pals,
 		
 		datCompl <- datCompl[, lapply(.SD, sum), by=aggIndex][!is.na(aggIndex),]
 		datCompl$binSizes <- binSizes[datSum$aggIndex]
-		datCompl <- data.table(lapply(datCompl[, numcols, with=FALSE], FUN="/", datCompl$binSizes))
+		datCompl <- as.data.table(lapply(datCompl[, numcols, with=FALSE], FUN="/", datCompl$binSizes))
 
 		datMean <- datSum[, numcols, with=FALSE] / datCompl[, numcols, with=FALSE]
-		datMean <- data.table(lapply(datMean, FUN="/", datSum$binSizes))
+		datMean <- as.data.table(lapply(datMean, FUN="/", datSum$binSizes))
 	
 		datCompl <- 100 * datCompl
 
