@@ -2,10 +2,9 @@
 \alias{plot.tabplot}
 \title{Plot a \link{tabplot-object}}
 \usage{
-  \method{plot}{tabplot} (x, fontsize = 8,
-    legend.lines = 8,
-    title = ifelse(length(x$filter) == 0, x$dataset, paste(x$dataset, " (", x$filter, ")", sep = "")),
-    showTitle = FALSE, ...)
+  \method{plot}{tabplot} (x, fontsize = 10,
+    legend.lines = 8, title = NULL, showTitle = NULL,
+    fontsize.title = 14, ...)
 }
 \arguments{
   \item{x}{\link{tabplot-object}}
@@ -18,7 +17,10 @@
   \item{title}{title of the plot (shown if
   \code{showTitle==TRUE})}
 
-  \item{showTitle}{show the title}
+  \item{showTitle}{show the title. By default \code{FALSE},
+  unless a \code{title} is given.}
+
+  \item{fontsize.title}{the fontsize of the title}
 
   \item{...}{arguments passed to other methods}
 }

@@ -12,10 +12,10 @@ Description: A tableplot is a visualisation of a (large) dataset with a
         bar charts, and categorical variables as stacked bar charts.
         Missing values are taken into account. Also supports large ffdf
         datasets from the ff package.
-Version: 0.11-2
+Version: 0.12
 URL: http://code.google.com/p/tableplot/
-Date: 2012-05-01
-Depends: data.table (>= 1.5.3), grid
+Date: 2012-07-11
+Depends: data.table (>= 1.8.0), grid
 Suggests: ff (>= 2.2-0), classInt, ggplot2
 Collate: 'brokenX.R' 'cellplot.R' 'datetime2fac.R' 'getBinSizes.R'
         'getFreqTable.R' 'getFreqTable_DT.R' 'num2fac.R' 'onLoad.R'
@@ -25,8 +25,8 @@ Collate: 'brokenX.R' 'cellplot.R' 'datetime2fac.R' 'getBinSizes.R'
         'tableChange.R' 'tablePalettes.R' 'tableplot.R'
         'tableplot_checkBins.R' 'tableplot_checkDecreasing.R'
         'tableplot_checkFromTo.R' 'tableplot_checkPals.R'
-        'tableplot_checkScales.R' 'tableplot_checktCols.R'
-        'tableSave.R' 'tableViewport.R' 'tabplot_object.R'
-Packaged: 2012-05-02 12:16:01 UTC; mtes
+        'tableplot_checkScales.R' 'tableplot_checkCols.R' 'tableSave.R'
+        'tableViewport.R' 'tabplot_object.R'
+Packaged: 2012-07-12 08:19:01 UTC; von-tijn
 Repository: CRAN
-Date/Publication: 2012-05-02 12:59:38
+Date/Publication: 2012-07-12 09:21:39

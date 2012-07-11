@@ -2,33 +2,43 @@
 \alias{tableplot}
 \title{Create a tableplot}
 \usage{
-  tableplot(dat, colNames = names(dat), sortCol = 1,
+  tableplot(dat, select, subset = NULL, sortCol = 1,
     decreasing = TRUE, nBins = 100, from = 0, to = 100,
-    filter = NULL, scales = "auto",
+    nCols = ncol(dat), scales = "auto",
     pals = list("Set1", "Set2", "Set3", "Set4"),
     colorNA = "#FF1414", numPals = "Blues",
-    bias_brokenX = 0.8, IQR_bias = 5, plot = TRUE, ...)
+    bias_brokenX = 0.8, IQR_bias = 5, select_string = NULL,
+    subset_string = NULL, colNames = NULL, filter = NULL,
+    plot = TRUE, ...)
 }
 \arguments{
   \item{dat}{a \code{\link{data.frame}},
   \code{\link{data.table}}, or an
-  \code{\link[ff:ffdf]{ffdf}} object (required)}
+  \code{\link[ff:ffdf]{ffdf}} object (required).}
 
-  \item{colNames}{character vector containing the names of
-  the columns of \code{dat} that are visualized in the
-  tablelplot. If omitted, all columns are visualized. All
-  selected columns should be of class: numeric, integer,
-  factor, or logical.}
+  \item{select}{expression indicating the columns of
+  \code{dat} that are visualized in the tablelplot Also
+  column indices are supported. By default, all columns are
+  visualized. Use \code{select_string} for character
+  strings instead of expressions.}
 
-  \item{sortCol}{columns that are sorted. \code{sortCol} is
-  either a vector of column names of a vector of indices of
-  \code{colNames}}
+  \item{subset}{logical expression indicing which rows to
+  select in \code{dat} (as in \code{\link{subset}}). It is
+  also possible to provide the name of a categorical
+  variable: then, a tableplot for each category is
+  generated. Use \code{subset_string} for character strings
+  instead of an expressions.}
+
+  \item{sortCol}{expression indication the column(s) that
+  is(are) sorted. Also supports indices. Also character
+  strings can be used, but this is discouraged for
+  programming purposes (use indices instead).}
 
   \item{decreasing}{determines whether the columns are
-  sorted decreasingly (TRUE) of increasingly (FALSE).
-  \code{decreasing} can be either a single value that
-  applies to all sorted columns, or a vector of the same
-  length as \code{sortCol}.}
+  sorted decreasingly (\code{TRUE}) of increasingly
+  (\code{FALSE}). \code{decreasing} can be either a single
+  value that applies to all sorted columns, or a vector of
+  the same length as \code{sortCol}.}
 
   \item{nBins}{number of row bins}
 
@@ -36,10 +46,11 @@
 
   \item{to}{percentage to which the data is shown}
 
-  \item{filter}{filter condition to subset the observations
-  in \code{dat}, either a character or an expression. It is
-  also possible to give the name of a categorical variable:
-  then, a tableplot for each category is generated.}
+  \item{nCols}{the maximum number of columns per tableplot.
+  If this number is smaller than the number of columns
+  selected in \code{datNames}, multiple tableplots are
+  generated, where each of them contains the sorted
+  column(s).}
 
   \item{scales}{determines the horizontal axes of the
   numeric variables in \code{colNames}, options: "lin",
@@ -71,13 +82,34 @@
   "auto". The argument \code{IQR_bias} is multiplied by the
   interquartile range as a test.}
 
+  \item{select_string}{character equivalent of the
+  \code{select} argument (particularly useful for
+  programming purposes)}
+
+  \item{subset_string}{character equivalent of the
+  \code{subset} argument (particularly useful for
+  programming purposes)}
+
+  \item{colNames}{deprecated; used in older versions of
+  tabplot (prior to 0.12): use \code{select_string)}
+  instead}
+
+  \item{filter}{deprecated; used in older versions of
+  tabplot (prior to 0.12): use \code{subset_string)}
+  instead}
+
   \item{plot}{boolean, to plot or not to plot a tableplot}
 
   \item{...}{arguments passed to
   \code{\link{plot.tabplot}}}
 }
 \value{
-  \link{tabplot-object} (silent output)
+  \code{\link{tabplot-object}} (silent output). If multiple
+  tableplots are generated (which can be done by either
+  setting \code{subset} to a categorical column name, or by
+  restricting the number of columns with \code{nCols}),
+  then a list of \code{\link{tabplot-object}s} is silently
+  returned.
 }
 \description{
   A tableplot is a visualisation of (large) multivariate
@@ -86,8 +118,9 @@
   numeric variables, a bar chart of the mean values is
   depicted. For categorical variables, a stacked bar chart
   is depicted of the proportions of categories. Missing
-  values are taken into account. Also supports large ffdf
-  datasets from the ff package.
+  values are taken into account. Also supports large
+  \code{\link[ff:ffdf]{ffdf}} datasets from the
+  \code{\link[ff:ff]{ff}} package.
 }
 \examples{
 # load diamonds dataset from ggplot2
@@ -98,11 +131,12 @@ data(diamonds)
 tableplot(diamonds)
 
 # customized tableplot
-tableplot(diamonds, colNames=c("carat", "cut", "color", "clarity", "price"), sortCol="price", from=0, to=5)
+tableplot(diamonds, select=c(carat, cut, color, clarity, price), sortCol=price, from=0, to=5)
 
 # apply filter
-tableplot(diamonds, filter="price < 5000 & cut=='Premium'")
-tableplot(diamonds, filter="cut")
+tableplot(diamonds, subset=price < 5000 & cut=='Premium')
+tableplot(diamonds, subset=cut)
+
 
 }
 \keyword{visualization}

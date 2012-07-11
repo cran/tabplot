@@ -16,19 +16,23 @@
   used for tableplots.
 }
 \details{
-  Qualitative palattes (for categorical variables):
-  \itemize{ \item Set1 \item Set2 \item Set3 \item Set4
-  \item Set5 \item Paired \item HCL1 \item HCL2 \item HCL3
-  } The default palette, "Set1", is a color blind friendly
-  palette (see Okabe and Ito, 2002). Palettes "Set2" to
-  "Set5" and "Paired" are based on ColorBrewer palettes
-  (Brewer et al., 2003). The HCL Palettes are based on the
-  Hue-Chroma-Luminance color space model (see Zeileis et
-  al., 2009).
-
   Sequential palettes (for numeric variables): \itemize{
   \item Blues \item Greens \item Greys } These palettes are
   taken from ColorBrewer (Brewer et al., 2003).
+
+  Qualitative palattes (for categorical variables):
+  \itemize{ \item Set1 \item Set2 \item Set3 \item Set4
+  \item Set5 \item Set6 \item Set7 \item Paired \item HCL1
+  \item HCL2 \item HCL3 } The default palette, "Set1", is a
+  colorblind-friendly palette (see Okabe and Ito, 2002).
+  Palettes "Set2" to "Set6" and "Paired" are based on
+  ColorBrewer palettes (Brewer et al., 2003). Palette
+  "Set7", is a colorblind-friedly palette from the
+  dichromat package (see Thomas Lumley , 2012). The HCL
+  Palettes are based on the Hue-Chroma-Luminance color
+  space model (see Zeileis et al., 2009). The color red has
+  been removed from the orignal palettes, since it is
+  occupied by missing values.
 }
 \references{
   \href{http://jfly.iam.u-tokyo.ac.jp/color/}{Okabe, M. and
@@ -41,6 +45,11 @@
   ColorBrewer in Print: A Catalog of Color Schemes for
   Maps, Cartography and Geographic Information Science
   30(1): 5-32.}
+
+  \href{http://http://CRAN.R-project.org/package=dichromat/}{Thomas
+  Lumley (2012). dichromat: Color schemes for dichromats. R
+  package version 1.2-4.
+  http://CRAN.R-project.org/package=dichromat}
 
   \href{http://statmath.wu.ac.at/~zeileis/papers/Zeileis+Hornik+Murrell-2009.pdf}{Zeileis,
   A., Hornik, K., and Murrell, P.  Escaping RGBland:

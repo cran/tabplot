@@ -1,15 +1,16 @@
 #' Create a tableplot
 #'
-#' A tableplot is a visualisation of (large) multivariate datasets. Each column represents a variable and each row bin is an aggregate of a certain number of records. For numeric variables, a bar chart of the mean values is depicted. For categorical variables, a stacked bar chart is depicted of the proportions of categories. Missing values are taken into account. Also supports large ffdf datasets from the ff package.
+#' A tableplot is a visualisation of (large) multivariate datasets. Each column represents a variable and each row bin is an aggregate of a certain number of records. For numeric variables, a bar chart of the mean values is depicted. For categorical variables, a stacked bar chart is depicted of the proportions of categories. Missing values are taken into account. Also supports large \code{\link[ff:ffdf]{ffdf}} datasets from the \code{\link[ff:ff]{ff}} package.
 #'
-#' @param dat a \code{\link{data.frame}}, \code{\link{data.table}}, or an \code{\link[ff:ffdf]{ffdf}} object (required)
-#' @param colNames character vector containing the names of the columns of \code{dat} that are visualized in the tablelplot. If omitted, all columns are visualized. All selected columns should be of class: numeric, integer, factor, or logical.
-#' @param sortCol columns that are sorted. \code{sortCol} is either a vector of column names of a vector of indices of \code{colNames}
-#' @param decreasing determines whether the columns are sorted decreasingly (TRUE) of increasingly (FALSE). \code{decreasing} can be either a single value that applies to all sorted columns, or a vector of the same length as \code{sortCol}.
+#' @param dat a \code{\link{data.frame}}, \code{\link{data.table}}, or an \code{\link[ff:ffdf]{ffdf}} object (required). 
+#' @param select expression indicating the columns of \code{dat} that are visualized in the tablelplot Also column indices are supported. By default, all columns are visualized. Use \code{select_string} for character strings instead of expressions. 
+#' @param subset logical expression indicing which rows to select in \code{dat} (as in \code{\link{subset}}). It is also possible to provide the name of a categorical variable: then, a tableplot for each category is generated. Use \code{subset_string} for character strings instead of an expressions.
+#' @param sortCol expression indication the column(s) that is(are) sorted. Also supports indices. Also character strings can be used, but this is discouraged for programming purposes (use indices instead).
+#' @param decreasing determines whether the columns are sorted decreasingly (\code{TRUE}) of increasingly (\code{FALSE}). \code{decreasing} can be either a single value that applies to all sorted columns, or a vector of the same length as \code{sortCol}.
 #' @param nBins number of row bins
 #' @param from percentage from which the data is shown
 #' @param to percentage to which the data is shown
-#' @param filter filter condition to subset the observations in \code{dat}, either a character or an expression. It is also possible to give the name of a categorical variable: then, a tableplot for each category is generated.
+#' @param nCols the maximum number of columns per tableplot. If this number is smaller than the number of columns selected in \code{datNames}, multiple tableplots are generated, where each of them contains the sorted column(s).
 #' @param scales determines the horizontal axes of the numeric variables in \code{colNames}, options: "lin", "log", and "auto" for automatic detection. If necessary, \code{scales} is recycled.
 #' @param pals list of color palettes. Each list item is on of the following:
 #' \itemize{
@@ -21,56 +22,92 @@
 #' @param numPals name(s) of the palette(s) that is(are) used for numeric variables ("Blues", "Greys", or "Greens"). Recycled if necessary.
 #' @param bias_brokenX parameter between 0 en 1 that determines when the x-axis of a numeric variable is broken. If minimum value is at least \code{bias_brokenX} times the maximum value, then X axis is broken. To turn off broken x-axes, set \code{bias_brokenX=1}.
 #' @param IQR_bias parameter that determines when a logarithmic scale is used when \code{scales} is set to "auto". The argument \code{IQR_bias} is multiplied by the interquartile range as a test.
+#' @param select_string character equivalent of the \code{select} argument (particularly useful for programming purposes)
+#' @param subset_string character equivalent of the \code{subset} argument (particularly useful for programming purposes) 
+#' @param colNames deprecated; used in older versions of tabplot (prior to 0.12): use \code{select_string)} instead
+#' @param filter deprecated; used in older versions of tabplot (prior to 0.12): use \code{subset_string)} instead
 #' @param plot boolean, to plot or not to plot a tableplot
 #' @param ... arguments passed to \code{\link{plot.tabplot}}
-#' @return \link{tabplot-object} (silent output)
+#' @return \code{\link{tabplot-object}} (silent output). If multiple tableplots are generated (which can be done by either setting \code{subset} to a categorical column name, or by restricting the number of columns with \code{nCols}), then a list of \code{\link{tabplot-object}s} is silently returned.
 #' @export
 #' @keywords visualization
 #' @example ../examples/tableplot.R
-tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBins=100, from=0, to=100, filter=NULL, scales="auto", pals=list("Set1", "Set2", "Set3", "Set4"), colorNA = "#FF1414", numPals = "Blues", bias_brokenX=0.8, IQR_bias=5, plot=TRUE, ...) {
+tableplot <- function(dat, select, subset=NULL, sortCol=1,  decreasing=TRUE, 
+					  nBins=100, from=0, to=100, nCols=ncol(dat), 
+					  scales="auto", pals=list("Set1", "Set2", "Set3", "Set4"), colorNA = "#FF1414", 
+					  numPals = "Blues", bias_brokenX=0.8, IQR_bias=5, select_string = NULL,
+					  subset_string=NULL, colNames=NULL, filter=NULL, 
+					  plot=TRUE, ...) {
 
 	datName <- deparse(substitute(dat))
 	if (class(dat)[1]=="data.frame") dat <- data.table(dat)
+
+
+	
+	## discourage colNames and filter arguments
+	if (!missing(colNames)) {
+		warning("The argument colNames will not be supported anymore in the future versions 
+				of tabplot. Use select or select_string instead")
+		select_string <- colNames
+	}
+
+	if (!missing(filter)) {
+		warning("The argument filter will not be supported anymore in the future versions of tabplot. 
+				Use subset or subset_string instead")  
+		subset_string <- filter
+	}
+	
 	
 	#####################################
-	## Filter data
+	## Filter data: subset(string)
 	#####################################
-	if (!is.null(filter)) {
-		if (!(class(filter)[1] %in% c("character", "expression"))) stop("<filter> is not an expression nor a character")
-		
+	# complement subset and subset_string
+	if (!missing(subset)) {
+		subset_string <- deparse(substitute(subset))
+	} else if (!missing(subset_string)) {
+		subset <- parse(text=subset_string)
+	}
+
+	
+	if (!is.null(subset_string)) {
+
 		# split by one variable
-		if (filter %in% names(dat)) {
-			filter <- as.character(filter)
-			lvls <- levels(dat[[filter]])
+		if (subset_string %in% names(dat)) {
+			lvls <- levels(dat[[subset_string]])
 			
-			if ((class(dat[[filter]])[1]=="logical") || (class(dat)[1]=="ffdf" && vmode(dat[[filter]]) %in% c("boolean", "logical"))) {
+			if ((class(dat[[subset_string]])[1]=="logical") || (class(dat)[1]=="ffdf" &&
+				vmode(dat[[subset_string]]) %in% c("boolean", "logical"))) {
 				isLogical <- TRUE
 				lvls <- c("TRUE", "FALSE")
 			} else {
 				isLogical <- FALSE
 			}
-			if (is.null(lvls)) stop("filter variable is not categorical")
-			exprChar <- paste(filter, " == ", ifelse(isLogical, "", "\""), lvls, ifelse(isLogical, "", "\""), sep="")
-			expr <- lapply(exprChar, FUN=function(x)parse(text=x))
+			if (is.null(lvls)) stop("subset variable is not categorical")
 			
-			tabs <- lapply(expr, FUN=function(e){
-				tab <- tableplot(dat, colNames=colNames, sortCol=sortCol, decreasing=decreasing, scales=scales, pals=pals, nBins=nBins, from=from, to=to, filter=e, bias_brokenX=bias_brokenX, IQR_bias=IQR_bias, plot=plot, ...)
+			subsets_string <- paste(subset_string, " == ", ifelse(isLogical, "", "\""), lvls,
+									ifelse(isLogical, "", "\""), sep="")
+			tabs <- lapply(subsets_string, FUN=function(subs_string){
+				tab <- tableplot(dat, select_string=select_string, sortCol=sortCol, 
+								 decreasing=decreasing, scales=scales, pals=pals, nBins=nBins,
+								 from=from, to=to, subset_string=subs_string, 
+								 bias_brokenX=bias_brokenX, IQR_bias=IQR_bias, plot=plot, ...)
 				tab
 			})
-			return(tabs)
+			return(invisible(tabs))
 		}
-		
+		e <- substitute(subset)
 		# other filters
-		if (class(filter)[1]=="character") filter <- parse(text=filter)
 		if (class(dat)[1]=="ffdf") {
-			sel <- bit(nrow(dat))
+			r <- bit(nrow(dat))
 			for (i in chunk(dat)) {
-				sel[i] <- eval(filter, dat[i,])
+				r[i] <- eval(e, dat[i,])
+				r <- r & !is.na(r)
 			}
-			dat <- subset(dat, sel)
+			dat <- subset(dat, r)
 		} else {
-			sel <- eval(filter, dat)
-			dat <- dat[sel,]
+			r <- eval(e, dat, parent.frame())
+			r <- r & !is.na(r)
+			dat <- dat[r, ]
 		}
 		
 	}
@@ -83,13 +120,28 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBi
 	if (nrow(dat)==0) stop("<dat> doesn't have any rows")
 	if (nrow(dat)==1) stop("<dat> has only one row")
 	
-	## Check colNames
-	if (class(colNames)[1]!="character") stop("<colNames> is not a character(vector)")
-	if (!all(colNames %in% names(dat))) stop("<colNames> contains column names that are not found in <dat>")
-
+	## Check select(_string)
+	if (!missing(select)) {
+		nl <- as.list(seq_along(dat))
+		names(nl) <- names(dat)
+		colNames <- eval(substitute(select), nl, parent.frame())
+		colNames <- names(dat)[colNames]
+	} else if (!is.null(select_string)) {
+		if (!all(select_string %in% names(dat))) stop("select_string contains wrong column names")
+		colNames <- select_string
+	} else {
+		colNames <- names(dat)
+	}
+	
 	## Only select the columns of colNames
 	if (class(dat)[1]=="data.table") {
-		dat <- dat[, colNames, with=FALSE] 
+		
+		ignoreNames <- setdiff(names(dat), colNames)
+		if (length(ignoreNames)!=0) 
+			dat[, ignoreNames:=NULL, with=FALSE]
+		if (!identical(colNames, names(dat)))
+			setcolorder(dat, colNames)
+			#dat <- subset(dat, select=colNames)
 	} else {
 		dat <- dat[colNames]
 	}
@@ -97,11 +149,21 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBi
 	n <- length(colNames)
 
 	## Check sortCol, and (if necessary) cast it to indices
-	sortCol <- tableplot_checkCols(sortCol, colNames)
+
+	sortCol <- tableplot_checkCols(substitute(sortCol), colNames)
 
 	## Check decreasing vector
 	decreasing <- tableplot_checkDecreasing(decreasing, sortCol)
 
+	
+	## Check number of columns
+	if (!is.numeric(nCols)) stop("<ncolums> is not numeric")
+	if (nCols < length(sortCol)) stop("<nCols> less than number of sorted columns")
+	if (nCols == length(sortCol) && length(sortCol) < length(colNames)) 
+		stop("<nCols> equal to number of sorted columns while number of selected columns is larger")
+	
+	if (nCols > length(colNames)) nCols <- length(colNames)
+	
 	## Check scales
 	scales <- tableplot_checkScales(scales)
 
@@ -114,7 +176,8 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBi
 	}
 	
 	## Check numPals
-	if ((class(numPals)!="character") || !all(numPals %in% c("Blues", "Greens", "Greys"))) stop("<numPals> is not correct")
+	if ((class(numPals)!="character") || !all(numPals %in% c("Blues", "Greens", "Greys")))
+		stop("<numPals> is not correct")
 	
 	## Check nBins
 	nBins <- tableplot_checkBins(nBins, nrow(dat))
@@ -123,19 +186,18 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBi
 	tableplot_checkFromTo(from, to)
 	
 
-	## Check filter variables
-	# if (!is.null(filter)) filter <- tableplot_checkCols(filter, colNames)
-
-	######## TO DO: implement filter variable(s)
-
 	##########################
 	#### Preprocess
 	##########################
 
-	tab <- preprocess(dat, datName, as.character(filter), colNames, sortCol,  decreasing, scales, pals, colorNA, numPals, nBins, from,to)
+	
+	tab <- preprocess(dat, datName, subset_string, colNames, sortCol,  
+					  decreasing, scales, pals, colorNA, numPals, nBins, from,to)
+	
+	#dat[, agg Index:=NULL]
 	
 	# delete cloned ffdf (those with filter)
-	if (!is.null(filter) && class(dat)[1]=="ffdf") delete(dat)
+	if (!missing(subset_string) && class(dat)[1]=="ffdf") delete(dat)
 
 	isNumber <- tab$isNumber
 	
@@ -249,9 +311,35 @@ tableplot <- function(dat, colNames=names(dat), sortCol=1,  decreasing=TRUE, nBi
 		tab$columns[[i]]$xline <- xline
 		tab$columns[[i]]$widths <- widths
 	}
-	
-	## plot
-	class(tab) <- "tabplot"
-	if (plot) plot(tab, ...)
-	invisible(tab)
+
+	### multiple tableplots if nCols < length(colNames)
+	if (nCols < length(colNames)) {
+		nOtherCol <- nCols - length(sortCol)
+		
+		otherCols <- setdiff(seq.int(length(colNames)), sortCol)
+		
+		nOtherCols <- length(otherCols)
+		
+		ntab <- ceiling(nOtherCols / nOtherCol)
+		tabs <- list()
+		j <- 1
+		for (i in seq.int(ntab))	{
+			id <- unique(c(sortCol,
+				otherCols[j:(min(j-1+nOtherCol, nOtherCols))]))
+			tab_sec <- tab
+			tab_sec$n <- length(id)
+			tab_sec$isNumber <- tab$isNumber[id]
+			tab_sec$columns <- tab$columns[id]
+			class(tab_sec) <- "tabplot"
+			tabs[[i]] <- tab_sec
+			if (plot) plot(tab_sec, ...)
+			j <- j + nOtherCol
+		}
+		invisible(tabs)
+	} else {		
+		## plot
+		class(tab) <- "tabplot"
+		if (plot) plot(tab, ...)
+		invisible(tab)
+	}
 }

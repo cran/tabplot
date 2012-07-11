@@ -3,14 +3,15 @@
 \title{Change a \link{tabplot-object}}
 \usage{
   tableChange(tab,
-    colNames = sapply(tab$columns, function(col) col$name),
+    select_string = sapply(tab$columns, function(col) col$name),
     flip = FALSE, pals = list(), colorNA = NULL,
     numPals = NULL)
 }
 \arguments{
   \item{tab}{\link{tabplot-object}}
 
-  \item{colNames}{vector of names of the desired columns}
+  \item{select_string}{vector of names of the desired
+  columns}
 
   \item{flip}{logical, if TRUE then the plot is flipped
   vertically, i.e.\ the row bins are reversed}
@@ -42,7 +43,7 @@ data(diamonds)
 tab <- tableplot(diamonds, plot=FALSE)
  
 # modify the tabplot object: reverse order of columns and customize palette
-tab <- tableChange(tab, colNames=names(diamonds[1:7]), pals=list("Set4", "Set3", gray(seq(0,1,length.out=8))))
+tab <- tableChange(tab, select_string=rev(names(diamonds)), pals=list("Set4", "Set3", gray(seq(0,1,length.out=8))))
  
 # plot modified tabplot object
 plot(tab)
