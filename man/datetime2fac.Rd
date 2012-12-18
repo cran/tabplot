@@ -1,6 +1,6 @@
 \name{datetime2fac}
 \alias{datetime2fac}
-\title{Create a factor vector out of a date-time vector}
+\title{Transform a date-time vector to a factor}
 \usage{
   datetime2fac(p, rng = range(p, na.rm = TRUE))
 }
@@ -13,8 +13,8 @@
   A factor vector.
 }
 \description{
-  Create a factor vector out of a date-time vector from
-  class "POSIXt" or "Date".
+  Transform a date-time vector from class
+  \code{\link{POSIXt}} or \code{\link{Date}} to a factor.
 }
 \details{
   The range \code{rng} is cut according to different pretty
@@ -24,6 +24,20 @@
   translated to \code{NA}.
 }
 \note{
-  \code{ff} vectors are not implemented yet
+  This function is still in development stage, and can be
+  improved and optimized. \code{ff} vectors are not
+  implemented yet
+}
+\examples{
+d <- as.Date("2012-12-21") + sample.int(500, 1000, replace=TRUE)
+d2 <- datetime2fac(d)
+levels(d2)
+
+t <- as.POSIXlt(Sys.time(), "GMT") + sample.int(1e5, 1000, replace=TRUE)
+t2 <- datetime2fac(t)
+levels(t2)
+}
+\seealso{
+  \code{\link{num2fac}}
 }
 

@@ -5,9 +5,9 @@
   An object of class \code{tabplot} contains the
   information to plot a tableplot without the steps that
   may be time-consuming, such as sorting and aggregating.
-  The function \code{\link{tableplot}} returns a
-  tabplot-object. (Use \code{plot=FALSE} to supress that
-  the tableplot is plot.) The function
+  The function \code{\link{tableplot}} silently returns a
+  tabplot-object (use \code{plot=FALSE} to supress that the
+  tableplot is plot). The function
   \code{\link{tableChange}} can be used to change a
   tabplot-object. The generic functions
   \code{\link[=plot.tabplot]{plot}} and

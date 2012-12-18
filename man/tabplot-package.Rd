@@ -5,7 +5,7 @@
 \title{Tableplot, a visualization of large datasets}
 \description{
   \tabular{ll}{ Package: \tab tabplot\cr Type: \tab
-  Package\cr Version: \tab 0.12\cr Date: \tab 2012-07-11\cr
+  Package\cr Version: \tab 1.0\cr Date: \tab 2012-12-18\cr
   License: \tab GPL-3\cr LazyLoad: \tab yes\cr }
 }
 \details{
@@ -19,15 +19,21 @@
   \code{\link[ff:ffdf]{ffdf}} datasets from the
   \code{\link[ff:ff]{ff}} package.
 
-  The function \code{\link{tableplot}} is used to create a
-  tableplot. Other useful functions are \itemize{ \item
+  The main function of the package is
+  \code{\link{tableplot}}, which is used to create a
+  tableplot. Other useful functions are: \itemize{ \item
+  \code{\link{itableplot}} to start a graphical user
+  interface (made with the \code{\link[shiny:shiny]{shiny}}
+  package); \item \code{\link{tablePrepare}} to prepare a
+  large dataset. Tableplotting is much faster when the
+  returned object is passed on to \code{\link{tableplot}}
+  rather than the dataset itself; \item
   \code{\link{tablePalettes}} to show all quantitative and
-  qualitative palettes that are included \item
-  \code{\link{tableSave}} to save a tableplot \item
+  qualitative palettes that are included; \item
+  \code{\link{tableSave}} to save a tableplot; \item
   \code{\link{tableChange}} to make layout changes to a
-  tableplot } Further, a graphical user interface has been
-  implemented in the package
-  \code{\link[tabplotGTK:tabplotGTK]{tabplotGTK}}
+  tableplot. } For a quick intro, see
+  \href{../doc/tabplot-vignette.pdf}{\code{vignette("tabplot-vignette")}}.
 }
 \examples{
 # load diamonds dataset from ggplot2

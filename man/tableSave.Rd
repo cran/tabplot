@@ -6,12 +6,12 @@
     filename = paste(tab$dataset, ".pdf", sep = ""),
     device = default_device(filename), path = NULL,
     scale = 1, width = par("din")[1],
-    height = par("din")[2], dpi = 300, fontsize = 8,
-    legend.lines = 8, title = tab$dataset,
-    showTitle = FALSE, ...)
+    height = par("din")[2], dpi = 300, onePage = TRUE, ...)
 }
 \arguments{
-  \item{tab}{a \link{tabplot-object}}
+  \item{tab}{a \link{tabplot-object}, or a list of
+  \link{tabplot-object}s, which are either stacked
+  horizontally or put on multiple pages (for pdf only)}
 
   \item{filename}{filename with extention (pdf, eps, svg,
   wmf, png, jpg, bmp, or tiff)}
@@ -29,36 +29,28 @@
 
   \item{dpi}{dpi to use for raster graphics}
 
-  \item{fontsize}{the (maximum) fontsize}
+  \item{onePage}{if true, multiple tab objects are stacked
+  horizontally, else they are printed on multiple pages}
 
-  \item{legend.lines}{the number of lines preserved for the
-  legend}
-
-  \item{title}{title of the plot (shown if
-  \code{showTitle==TRUE})}
-
-  \item{showTitle}{show the title}
-
-  \item{...}{other arguments passed to graphics device}
+  \item{...}{other arguments passed to
+  \code{\link[=plot.tabplot]{plot}} or the used graphics
+  device}
 }
 \description{
   Save a tableplot in pdf, eps, svg, wmf, png, jpg, bmp, or
   tiff format.
 }
 \examples{
-# load diamonds dataset from ggplot2:
-
-# Not run:
+\dontrun{
 	require(ggplot2)
 	data(diamonds)
-	
+
 	# default tableplot
 	tab <- tableplot(diamonds)
-	
+
 	# save tableplot
-	tableSave(tab, filename="diamonds.png")
-# End(Not run)
-	
+	tableSave(tab, filename="diamonds.png", title="Shine on you Crazy Diamond!!!")
+	}
 }
 \keyword{save}
 \keyword{tableplot}

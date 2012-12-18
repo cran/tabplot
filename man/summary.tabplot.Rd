@@ -9,7 +9,7 @@
   \item{object}{tabplot object}
 
   \item{digits}{integer, used for number formatting with
-  \code{\link{format}()}}
+  \code{\link{format}}}
 
   \item{...}{arguments passed to other methods}
 }

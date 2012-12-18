@@ -4,14 +4,32 @@
 #' @param x \link{tabplot-object}
 #' @param fontsize the (maximum) fontsize
 #' @param legend.lines the number of lines preserved for the legend
+#' @param max_print_levels maximum number of printed category labels in the legend
+#' @param text_NA text printed for the missing values category in the legend
 #' @param title title of the plot (shown if \code{showTitle==TRUE})
 #' @param showTitle show the title. By default \code{FALSE}, unless a \code{title} is given.
 #' @param fontsize.title the fontsize of the title
-#' @param ... arguments passed to other methods
+#' @param showNumAxes plots an x-axis for each numerical variable, along with grid lines (\code{TRUE} by default).
+#' @param vp \code{\link[grid:viewport]{viewport}} to draw plot in (for instance useful to stack multiple tableplots)
+#' @param ... other arguments are not used
+#' @example ../examples/plot_tabplot.R
 #' @export
 #' @method plot tabplot
 plot.tabplot <-
-function(x, fontsize = 10, legend.lines = 8, title = NULL, showTitle = NULL, fontsize.title = 14, ...) {
+function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "missing", title = NULL, showTitle = NULL, fontsize.title = 14, showNumAxes=TRUE, vp=NULL, ...) {
+
+	require(grid) # only needed for devtools::load_all(), not for package building
+	
+	if (class(x)[1]!="tabplot") p(paste(deparse(substitute(x)), "is not a tabplot-object"))
+	
+	if (length(fontsize)!=1 || !is.numeric(fontsize)) stop("invalid fontsize")
+
+	if (length(legend.lines)!=1 || !is.numeric(legend.lines)) stop("invalid legend.lines")
+	if (length(max_print_levels)!=1 || !is.numeric(max_print_levels)) stop("invalid max_print_levels")
+	
+	if (max_print_levels < legend.lines) warning("max_print_levels is less than legend.lines")
+	
+	if (length(text_NA)!=1) stop("invalid text_NA")
 	
 	if (missing(showTitle)) showTitle <- !missing(title)
 	
@@ -70,7 +88,7 @@ function(x, fontsize = 10, legend.lines = 8, title = NULL, showTitle = NULL, fon
 						, gp=gpar(fontsize=fontsize.title)
 	)
 	
-	vpBodyCols <- viewport(name="BodyCols",
+	vpBodyCols <- viewport(name="BodyCols"
 						 , layout = grid.layout( nrow = 1
 						 						, ncol = x$n+1
 						 						, widths = unit(c(3,rep(1,x$n)), c("lines",rep("null",x$n)))
@@ -78,8 +96,15 @@ function(x, fontsize = 10, legend.lines = 8, title = NULL, showTitle = NULL, fon
 					   , gp=gpar(fontsize=fontsize)
 	)
 	
+	  
 	## set grid layout
-	grid.newpage()
+	if (is.null(vp)) {
+	  grid.newpage()
+	} else {
+	  if (is.character(vp)) 
+	    seekViewport(vp)
+	  else pushViewport(vp)
+	}
 	
 	pushViewport(vpBody)
 	
@@ -107,16 +132,25 @@ function(x, fontsize = 10, legend.lines = 8, title = NULL, showTitle = NULL, fon
 							 , id=rep(1:(x$nBins+2),each=2)
 							 )
 	
-				## percentages ticks
-				rests <- formatC(x$rows$marks - floor(x$rows$marks))	
-				digits <- max(0,(max(sapply(rests, FUN=nchar))-2))
-				marksChar <- paste(formatC(x$rows$marks, format="f", digits=digits),"%", sep="")
 				
-				ticks <- seq(1, 0, length.out=length(x$rows$marks))
-				grid.polyline(x=c(0.80,0.80,rep(c(0.75,0.80),length(ticks))),y=c(0,1,rep(ticks,each=2)),id=rep(1:(length(ticks)+1),each=2))
+				## percentages ticks
+				marks <- x$rows$marks
+				from <- x$rows$from
+				to <- x$rows$to
+
+				marksPos <- 1 - (marks - from) / (to - from)
+				marksVis <- marksPos >=0 & marksPos <=1
+				
+				rests <- formatC(marks - floor(marks))	
+				digits <- max(0,(max(sapply(rests, FUN=nchar))-2))
+				marksChar <- paste(formatC(marks, format="f", digits=digits),"%", sep="")
+				
+				grid.polyline(x=c(0.80,0.80,rep(c(0.75,0.80),sum(marksVis))),
+							  y=c(0,1,rep(marksPos[marksVis],each=2)),
+							  id=rep(1:(sum(marksVis)+1),each=2))
 				
 				## percentages labels
-				grid.text(marksChar,x=0.75, y=ticks, just="right")
+				grid.text(marksChar[marksVis],x=0.75, y=marksPos[marksVis], just="right")
 			
 			})
 			#############################
@@ -151,9 +185,9 @@ function(x, fontsize = 10, legend.lines = 8, title = NULL, showTitle = NULL, fon
 					grid.text(columnName, gp=gpar(cex=cex))
 					
 					## Place sorting arrow before name
-					if (tCol$sort!="") {
+					if (!is.na(tCol$sort_decreasing)) {
 						grid.polygon( x = c(0.1, 0.4, 0.7)
-						            , y = if (tCol$sort=="decreasing") 
+						            , y = if (tCol$sort_decreasing) 
 										     c(0.6, 0.2, 0.6)
 									      else
 							                 c(0.2, 0.6, 0.2)
@@ -164,13 +198,15 @@ function(x, fontsize = 10, legend.lines = 8, title = NULL, showTitle = NULL, fon
 				})
 			
 				if (tCol$isnumeric){
-					plotNumCol(tCol, x, vpTitle, vpGraph, vpLegend)
+					plotNumCol(tCol, x, vpTitle, vpGraph, vpLegend, showNumAxes)
 				}
 				else {
-					plotCatCol(tCol, x, vpTitle, vpGraph, vpLegend)
+					plotCatCol(tCol, x, vpTitle, vpGraph, vpLegend, max_print_levels,
+							   text_NA, legend.lines)
 				}
 			})
 		}
 	})
-
+  
+	upViewport(1 + !is.null(vp))
 }

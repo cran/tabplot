@@ -1,88 +1,88 @@
 #' Change a \link{tabplot-object}
 #'
-#' Change the order of columns, flip, and change the palettes of a \link{tabplot-object}.
+#' Make layout changes in a \link{tabplot-object}, such as the order of columns, and color palettes.
 #'
 #' @aliases tableChange
 #' @param tab \link{tabplot-object}
+#' @param select index vector of the desired columns (column names are not supported)
 #' @param select_string vector of names of the desired columns
-#' @param flip logical, if TRUE then the plot is flipped vertically, i.e.\ the row bins are reversed
+#' @param decreasing determines whether the dataset is sorted decreasingly (\code{TRUE}) of increasingly (\code{FALSE}).
 #' @param pals list of color palettes. Each list item is on of the following:
 #' \itemize{
 #' \item a palette name in \code{\link{tablePalettes}}, optionally with the starting color between brackets.
 #' \item a palette vector
 #' }
+#' If the list items are unnamed, they are applied to all selected categorical variables (recycled if necessary). The list items can be assigned to specific categorical variables,
+#' by naming them accordingly.
 #' @param colorNA color for missing values
 #' @param numPals name(s) of the palette(s) that is(are) used for numeric variables ("Blues", "Greys", or "Greens"). Recycled if necessary.
 #' @return \link{tabplot-object}
 #' @export
 #' @example ../examples/tableChange.R
 
-tableChange <- function(tab, select_string=sapply(tab$columns, function(col)col$name), flip=FALSE, pals=list(), colorNA = NULL, numPals = NULL) {
+tableChange <- function(tab, select=NULL, select_string=tab$colNames, decreasing=NULL, pals=list(), colorNA = NULL, numPals = NULL) {
 
 	## change order of columns
-	currentColNames <- sapply(tab$columns, function(col)col$name)
+	currentColNames <- tab$colNames
 
-	colID <- match(select_string, currentColNames)
+	colID <- if (missing(select)) {
+		 match(select_string, currentColNames)
+	} else select
 	
-	## check if each column in colNames exist in tab
-	if (any(is.na(colID))) stop(paste("Column(s) ", paste(select_string[is.na(colID)], collapse=", "), " does(do) not exist."  , sep=""))
+	if (any(is.na(colID))) stop("Unknown columns selected")
 
-	tab2 <- list(dataset=tab$dataset,
-			n=length(select_string),
-			nBins=tab$nBins,
-			binSizes=tab$binSizes,
-			isNumber=tab$isNumber[colID],
-			rows=tab$rows,
-			columns=lapply(colID, function(id) tab$column[[id]])
-		)
-
+	tab2 <- tab
+	tab2$n <- length(colID)
+	tab2$colNames <- tab2$colNames[colID]
+	tab2$isNumber <- tab2$isNumber[colID]
+	tab2$sort_decreasing <- tab2$sort_decreasing[colID]
+	tab2$columns <- tab2$columns[colID]
+	
 	## flip tabplot
-	if (flip) {
-		tab2$rows$heights <- rev(tab$rows$heights)
-		
-		tab2$rows$heights <- -(tab$binSizes/tab$rows$m)
-	    tab2$rows$y <- 1- c(0,cumsum(tab$binSizes/tab$rows$m)[-tab$nBins])
-	
-		tab2$rows$marks <- rev(tab$rows$marks)
-		
-	
-		flipCol <- function(col) {
-			col$sort <- ifelse(col$sort=="", "", ifelse(col$sort=="decreasing", "increasing", "decreasing"))
-			if (col$isnumeric) {
-				col$mean <- rev(col$mean)
-				col$compl <- rev(col$compl)
-				col$lower <- rev(col$lower)
-				col$upper <- rev(col$upper)
-				col$mean.scaled <- rev(col$mean.scaled)
-				col$mean.brokenX <- rev(col$mean.brokenX)
-				col$widths <- rev(col$widths)
-			} else {
-				col$freq <- col$freq[nrow(col$freq):1,]		
-				col$x <- col$x[nrow(col$x):1,]		
-				col$widths <- col$widths[nrow(col$widths):1,]		
-			}
-			return(col)
+	if (!missing(decreasing)) {
+		if (decreasing!=na.omit(tab2$sort_decreasing)[1]) {
+			tab2$binSizes <- rev(tab$binSizes)
+			tab2$rows$heights <- tab$binSizes/tab$rows$m
+		    tab2$rows$y <- 1- c(0,cumsum(tab$binSizes/tab$rows$m)[-tab$nBins])
+			tab2$rows$marks <- rev(tab$rows$marks)
+			
+			tab2$sort_decreasing <- !tab2$sort_decreasing
+			
+			tab2$columns <- lapply(tab2$columns, function(col) {
+				col$sort_decreasing <- !col$sort_decreasing
+				if (col$isnumeric) {
+					col$mean <- rev(col$mean)
+					col$compl <- rev(col$compl)
+					#col$lower <- rev(col$lower)
+					#col$upper <- rev(col$upper)
+					col$mean.scaled <- rev(col$mean.scaled)
+					col$mean.brokenX <- rev(col$mean.brokenX)
+					col$widths <- rev(col$widths)
+				} else {
+					col$freq <- col$freq[nrow(col$freq):1,]		
+					col$x <- col$x[nrow(col$x):1,]		
+					col$widths <- col$widths[nrow(col$widths):1,]		
+				}
+				col
+			})
 		}
-		
-		tab2$columns <- lapply(tab2$columns, flipCol)
 	}
 	
 	## change palettes
-	if (length(pals)!=0) {
-		pals <- tableplot_checkPals(pals)
+	if (length(pals)) {
+		isChanged <- !tab2$isNumber
+		if (length(pnames <- names(pals))) isChanged <- isChanged & (tab2$colNames %in% pnames)
+		pals <- tableplot_checkPals(pals, colNames=tab2$colNames, isCat=isChanged)
 
-		whichCategorical <- which(sapply(tab2$columns, FUN=function(col)!col$isnumeric))
-
-		paletNr <- 1
-		for (i in whichCategorical) {
-			tab2$columns[[i]]$paletname <- pals$name[paletNr]
-			tab2$columns[[i]]$palet <- pals$palette[[paletNr]]
-			paletNr <- ifelse(paletNr==length(pals$name), 1, paletNr + 1)
-		}
+		tab2$columns[isChanged] <- mapply(function(col, pal){
+			col$paletname <- pal$name
+			col$palet <- pal$palette
+			col
+		}, tab2$columns[isChanged], pals[isChanged], SIMPLIFY=FALSE)
 	}
 
 	## change colorNA
-	if (!is.null(colorNA)) {
+	if (!missing(colorNA)) {
 		## Check colorNA
 		if (class(try(col2rgb(colorNA), silent=TRUE))=="try-error") {
 			stop("<colorNA> is not correct")
@@ -95,7 +95,7 @@ tableChange <- function(tab, select_string=sapply(tab$columns, function(col)col$
 	}
 	
 	## change numeric palettes
-	if (!is.null(numPals)) {
+	if (!missing(numPals)) {
 		## Check numPals
 		if ((class(numPals)!="character") || !all(numPals %in% c("Blues", "Greens", "Greys"))) stop("<numPals> is not correct")
 
@@ -109,6 +109,5 @@ tableChange <- function(tab, select_string=sapply(tab$columns, function(col)col$
 		
 	}
 	
-	class(tab2) <- "tabplot"
-	return(tab2)
+	tab2
 }

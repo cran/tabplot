@@ -1,6 +1,6 @@
 \name{num2fac}
 \alias{num2fac}
-\title{Create a factor vector out of a numerical vector}
+\title{Transform a numerical vector to a factor}
 \usage{
   num2fac(num, method = "pretty", num_scale = "auto",
     n = 0, brks = NA)
@@ -34,10 +34,23 @@
   A factor vector
 }
 \description{
-  Create a factor vector out of a numerical vector. The
-  levels can be determined by several methods.
+  Transform a numerical vector from class
+  \code{\link{POSIXt}} or \code{\link{Date}} to a factor.
 }
 \note{
-  \code{ff} vectors are not implemented yet
+  This function is still in development stage, and can be
+  improved and optimized. \code{ff} vectors are not
+  implemented yet
+}
+\examples{
+require(ggplot2)
+data(diamonds)
+
+diamonds$price2 <- num2fac(diamonds$price)
+
+tableplot(diamonds)
+}
+\seealso{
+  \code{\link{datetime2fac}}
 }
 
