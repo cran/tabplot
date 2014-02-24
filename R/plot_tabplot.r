@@ -1,7 +1,9 @@
 #' Plot a \link{tabplot-object}
 #'
 #' @aliases plot.tabplot
-#' @param x \link{tabplot-object}
+#' @name plot.tabplot
+#' @rdname plot.tabplot
+#' @param x \link{tabplot-object} or \link{tabplot_compare-object}
 #' @param fontsize the (maximum) fontsize
 #' @param legend.lines the number of lines preserved for the legend
 #' @param max_print_levels maximum number of printed category labels in the legend
@@ -10,17 +12,22 @@
 #' @param showTitle show the title. By default \code{FALSE}, unless a \code{title} is given.
 #' @param fontsize.title the fontsize of the title
 #' @param showNumAxes plots an x-axis for each numerical variable, along with grid lines (\code{TRUE} by default).
+#' @param relative boolean that determines whether relative scales are used for relative tableplots. If \code{TRUE}, then \code{mean.diff.rel<-(mean2-mean1)/mean1*100} are used. If \code{FALSE}, then the absolute diference is taken: \code{mean <- mean2-mean}.
 #' @param vp \code{\link[grid:viewport]{viewport}} to draw plot in (for instance useful to stack multiple tableplots)
 #' @param ... other arguments are not used
 #' @example ../examples/plot_tabplot.R
 #' @export
+#' @import grid
 #' @method plot tabplot
 plot.tabplot <-
-function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "missing", title = NULL, showTitle = NULL, fontsize.title = 14, showNumAxes=TRUE, vp=NULL, ...) {
+function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "missing", title = NULL, showTitle = NULL, fontsize.title = 14, showNumAxes=TRUE, relative=FALSE, vp=NULL, ...) {
 
-	require(grid) # only needed for devtools::load_all(), not for package building
 	
-	if (class(x)[1]!="tabplot") p(paste(deparse(substitute(x)), "is not a tabplot-object"))
+	if (!(class(x)[1] %in% c("tabplot", "tabplot_compare"))) p(paste(deparse(substitute(x)), "is not a tabplot-object"))
+	
+	compare <- (class(x)=="tabplot_compare")
+	relative <- relative && compare
+	
 	
 	if (length(fontsize)!=1 || !is.numeric(fontsize)) stop("invalid fontsize")
 
@@ -33,8 +40,10 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 	
 	if (missing(showTitle)) showTitle <- !missing(title)
 	
-	if (missing(title)) 
-		title <- ifelse(length(x$filter)==0, x$dataset, paste(x$dataset, " (", x$filter, ")", sep=""))
+	if (missing(title)) {
+		dataset <- ifelse(class(x)=="tabplot", x$dataset, paste(x$dataset2, x$dataset1, sep=" - "))
+		title <- ifelse(length(x$subset)==0, dataset, paste(dataset, " (", x$subset, ")", sep=""))
+	}
 	
 	#############################
 	## Determine colors and color scales
@@ -90,8 +99,8 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 	
 	vpBodyCols <- viewport(name="BodyCols"
 						 , layout = grid.layout( nrow = 1
-						 						, ncol = x$n+1
-						 						, widths = unit(c(3,rep(1,x$n)), c("lines",rep("null",x$n)))
+						 						, ncol = x$m+1
+						 						, widths = unit(c(3,rep(1,x$m)), c("lines",rep("null",x$m)))
 						   )
 					   , gp=gpar(fontsize=fontsize)
 	)
@@ -114,10 +123,6 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 	
 	cellplot(2, 1, vpBodyCols, {
 	
-		#BodyLayout <- grid.layout( nrow = 1, ncol = x$n+1
-		#                     , widths = unit(c(3,rep(1,x$n)), c("lines",rep("null",x$n)))
-	#						 )
-		#pushViewport(viewport(layout = BodyLayout))
 		
 		
 		#############################
@@ -135,8 +140,8 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 				
 				## percentages ticks
 				marks <- x$rows$marks
-				from <- x$rows$from
-				to <- x$rows$to
+				from <- x$from
+				to <- x$to
 
 				marksPos <- 1 - (marks - from) / (to - from)
 				marksVis <- marksPos >=0 & marksPos <=1
@@ -158,20 +163,48 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 			#############################
 	
 			cellplot(3,1, vpLegend, {
-				grid.text("row bins:", x=0.1, y=unit(5, units="lines"), just="left")
-				grid.text(paste("  ", x$nBins), x=0.1, y=unit(4, units="lines"), just="left")
-				grid.text("objects:", x=0.1, y=unit(2, units="lines"), just="left")
-				grid.text(paste("  ", x$rows$m), x=0.1, y=unit(1, units="lines"), just="left")
+				if (compare) {
+					numbers <- with(x, c(n1, n2))
+				} else {
+					numbers <- with(x, c(n, round(n/nBins), N))
+				}
+				formats <- format(numbers, big.mark=",")
+				widths <- convertWidth(stringWidth(formats), "npc", valueOnly=TRUE)
+				width <- max(widths)
+				spacer <- 0.1 + convertWidth(stringWidth("\t"), "npc", valueOnly=TRUE)
+				xpos <- spacer + width
+				space.row_bins <- convertWidth(stringWidth("row bins:  "), "npc", valueOnly=TRUE)
+				grid.text("row bins:", x=0.1, y=unit(5.5, units="lines"), just="left")
+				grid.text(x$nBins, x=space.row_bins, y=unit(5.5, units="lines"), just="left")
+				
+				
+				grid.text("objects:", x=0.1, y=unit(4, units="lines"), just="left")
+				grid.text(formats[1], x=xpos, y=unit(3, units="lines"), just="right")
+				grid.text(formats[2], x=xpos, y=unit(2, units="lines"), just="right")
+
+				if (compare) {
+					grid.text(paste(" (", x$dataset1, ")", sep=""), x=xpos, y=unit(3, units="lines"), just="left")
+					grid.text(paste(" (", x$dataset2, ")", sep=""), x=xpos, y=unit(2, units="lines"), just="left")
+				} else {
+					grid.text(" (per bin)", x=xpos, y=unit(2, units="lines"), just="left")
+					if (numbers[1]!=numbers[3]) {
+						grid.text(" (sample)", x=xpos, y=unit(3, units="lines"), just="left")
+						grid.text(formats[3], x=xpos, y=unit(1, units="lines"), just="right")
+						grid.text(" (full data)", x=xpos, y=unit(1, units="lines"), just="left")
+					}
+				}
 			})
 		})
 		
 		#############################
 		## Draw columns from left to right. Per column, check whether it is numeric or categorial.
 		#############################
+		
 	
-		for (i in 1:x$n) {
+		for (i in 1:x$m) {
 			cellplot(1,i+1, vpColumn, {
 				tCol <- x$columns[[i]]
+				decreasing <- ifelse(i==x$sortCol, x$decreasing, NA)
 				cellplot(1, 1, vpTitle, {
 					## Determine column name. Place "log(...)" around name when scale is logarithmic
 					columnName <- ifelse(tCol$isnumeric && tCol$scale_final=="log", paste("log(",tCol$name, ")", sep=""), tCol$name)
@@ -185,9 +218,9 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 					grid.text(columnName, gp=gpar(cex=cex))
 					
 					## Place sorting arrow before name
-					if (!is.na(tCol$sort_decreasing)) {
+					if (!is.na(decreasing)) {
 						grid.polygon( x = c(0.1, 0.4, 0.7)
-						            , y = if (tCol$sort_decreasing) 
+						            , y = if (decreasing) 
 										     c(0.6, 0.2, 0.6)
 									      else
 							                 c(0.2, 0.6, 0.2)
@@ -198,15 +231,22 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 				})
 			
 				if (tCol$isnumeric){
-					plotNumCol(tCol, x, vpTitle, vpGraph, vpLegend, showNumAxes)
+					plotNumCol(tCol, x, vpTitle, vpGraph, vpLegend, showNumAxes, relative)
 				}
 				else {
 					plotCatCol(tCol, x, vpTitle, vpGraph, vpLegend, max_print_levels,
-							   text_NA, legend.lines)
+							   text_NA, legend.lines, compare)
 				}
 			})
 		}
 	})
   
 	upViewport(1 + !is.null(vp))
+}
+
+#' @rdname plot.tabplot
+#' @usage \method{plot}{tabplot_compare}(x, ...)
+#' @export
+plot.tabplot_compare <-function(x, ...) {
+	plot.tabplot(x, ...)
 }

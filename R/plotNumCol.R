@@ -1,7 +1,12 @@
-plotNumCol <- function(tCol, tab, vpTitle, vpGraph, vpLegend, showNumAxes){
+plotNumCol <- function(tCol, tab, vpTitle, vpGraph, vpLegend, showNumAxes, relative=FALSE){
 	## checks if device is Cario {cairoDevice}
 	drawContours <- TRUE
 
+	if (relative) {
+		tCol[c("brokenX", "mean.diff.coor", "marks.labels", "marks.x", "xline", "widths")] <-
+			tCol[c("brokenX.rel", "mean.diff.coor.rel", "marks.labels.rel", "marks.x.rel", "xline.rel", "widths.rel")]
+	}
+	
 	lgrey <- "#F0F0F0"	#brewer.pal(9,"Greys")[2]
 	#mgrey <- "#D0D0D0"
 	lred <- "#FEE0D2"	#brewer.pal(9,"Reds")[2]
@@ -10,7 +15,7 @@ plotNumCol <- function(tCol, tab, vpTitle, vpGraph, vpLegend, showNumAxes){
 
 	
 	cellplot(2,1,vpGraph, {		
-		grid.rect(gp = gpar(col=NA,fill = lgrey))
+		grid.rect(gp = gpar(col=lgrey,fill = lgrey))
 		
 		## bins with all missings
 		missings <- which(tCol$compl==0)
@@ -22,7 +27,7 @@ plotNumCol <- function(tCol, tab, vpTitle, vpGraph, vpLegend, showNumAxes){
 			cols <- NA
 		}
 		
-		
+				
 		
 		## plot bins
 		grid.rect( x = rep(tCol$xline,tab$nBins)

@@ -1,15 +1,18 @@
 \name{plot.tabplot}
 \alias{plot.tabplot}
+\alias{plot.tabplot_compare}
 \title{Plot a \link{tabplot-object}}
 \usage{
-  \method{plot}{tabplot} (x, fontsize = 10,
-    legend.lines = 8, max_print_levels = 15,
-    text_NA = "missing", title = NULL, showTitle = NULL,
-    fontsize.title = 14, showNumAxes = TRUE, vp = NULL,
-    ...)
+\method{plot}{tabplot}(x, fontsize = 10, legend.lines = 8,
+  max_print_levels = 15, text_NA = "missing", title = NULL,
+  showTitle = NULL, fontsize.title = 14, showNumAxes = TRUE,
+  relative = FALSE, vp = NULL, ...)
+
+\method{plot}{tabplot_compare}(x, ...)
 }
 \arguments{
-  \item{x}{\link{tabplot-object}}
+  \item{x}{\link{tabplot-object} or
+  \link{tabplot_compare-object}}
 
   \item{fontsize}{the (maximum) fontsize}
 
@@ -34,6 +37,12 @@
   variable, along with grid lines (\code{TRUE} by
   default).}
 
+  \item{relative}{boolean that determines whether relative
+  scales are used for relative tableplots. If \code{TRUE},
+  then \code{mean.diff.rel<-(mean2-mean1)/mean1*100} are
+  used. If \code{FALSE}, then the absolute diference is
+  taken: \code{mean <- mean2-mean}.}
+
   \item{vp}{\code{\link[grid:viewport]{viewport}} to draw
   plot in (for instance useful to stack multiple
   tableplots)}
@@ -41,7 +50,7 @@
   \item{...}{other arguments are not used}
 }
 \description{
-  Plot a \link{tabplot-object}
+Plot a \link{tabplot-object}
 }
 \examples{
 # load diamonds dataset from ggplot2

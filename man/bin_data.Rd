@@ -2,8 +2,8 @@
 \alias{bin_data}
 \title{Bin data}
 \usage{
-  bin_data(p, sortCol = 1L, cols = seq_along(p$data),
-    from = 0, to = 1, nbins = 100L, decreasing = FALSE)
+bin_data(p, sortCol = 1L, cols = seq_along(p$data), from = 0, to = 1,
+  nbins = 100L, decreasing = FALSE, sample = FALSE, sampleBinSize = 100)
 }
 \arguments{
   \item{p}{prepared dataset (see
@@ -20,8 +20,12 @@
   \item{nbins}{number of bins}
 
   \item{decreasing}{sort decreasingly}
+
+  \item{sample}{sample or use whole dataset?}
+
+  \item{sampleBinSize}{sample size per bin}
 }
 \description{
-  Working horse for tableplot, does the actual binning
+Working horse for tableplot, does the actual binning
 }
 
