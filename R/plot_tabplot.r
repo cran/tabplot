@@ -1,9 +1,11 @@
 #' Plot a \link{tabplot-object}
+#' 
+#' Plot a \link{tabplot-object}. The arguments of this function, which specify the layout, can also be passed on to \code{\link{tableplot}} directly. New in version 1.2 is the argument \code{numMode}, which determines how numeric variables are plot.
 #'
 #' @aliases plot.tabplot
 #' @name plot.tabplot
 #' @rdname plot.tabplot
-#' @param x \link{tabplot-object} or \link{tabplot_compare-object}
+#' @param x \code{\link{tabplot-object}} or \code{\link{tabplot_compare-object}}
 #' @param fontsize the (maximum) fontsize
 #' @param legend.lines the number of lines preserved for the legend
 #' @param max_print_levels maximum number of printed category labels in the legend
@@ -12,7 +14,18 @@
 #' @param showTitle show the title. By default \code{FALSE}, unless a \code{title} is given.
 #' @param fontsize.title the fontsize of the title
 #' @param showNumAxes plots an x-axis for each numerical variable, along with grid lines (\code{TRUE} by default).
+#' @param rotateNames logical or numeric value that determines the rotation angle of the column names. If \code{TRUE}, they are rotated 90 degrees. By default, column names are rotated when the number of columns is greater than 15.
 #' @param relative boolean that determines whether relative scales are used for relative tableplots. If \code{TRUE}, then \code{mean.diff.rel<-(mean2-mean1)/mean1*100} are used. If \code{FALSE}, then the absolute diference is taken: \code{mean <- mean2-mean}.
+#' @param numMode character value that determines how numeric values are plotted. The value consists of the following building blocks, which are concatenated with the "-" symbol. The default value is "mb-sdb-sdl". Prior to version 1.2, "MB-ML" was the default value.
+#' \describe{
+#' \item{\code{sdb}}{sd bars between mean-sd to mean+sd are shown}
+#' \item{\code{sdl}}{sd lines at mean-sd and mean+sd are shown}
+#' \item{\code{mb}}{mean bars are shown}
+#' \item{\code{MB}}{mean bars are shown, where the color of the bar indicate completeness where positive mean values are blue and negative orange}
+#' \item{\code{ml}}{mean lines are shown}
+#' \item{\code{ML}}{mean lines are shown, where positive mean values are blue and negative orange}
+#' \item{\code{mean2}}{mean values are shown}
+#' }
 #' @param vp \code{\link[grid:viewport]{viewport}} to draw plot in (for instance useful to stack multiple tableplots)
 #' @param ... other arguments are not used
 #' @example ../examples/plot_tabplot.R
@@ -20,14 +33,17 @@
 #' @import grid
 #' @method plot tabplot
 plot.tabplot <-
-function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "missing", title = NULL, showTitle = NULL, fontsize.title = 14, showNumAxes=TRUE, relative=FALSE, vp=NULL, ...) {
+function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "missing", title = NULL, showTitle = NULL, fontsize.title = 14, showNumAxes=TRUE, rotateNames = NA, relative=FALSE, numMode="mb-sdb-ml", vp=NULL, ...) {
 
 	
-	if (!(class(x)[1] %in% c("tabplot", "tabplot_compare"))) p(paste(deparse(substitute(x)), "is not a tabplot-object"))
+	if (!(class(x)[1] %in% c("tabplot", "tabplot_compare"))) stop(paste(deparse(substitute(x)), "is not a tabplot-object"))
 	
 	compare <- (class(x)=="tabplot_compare")
-	relative <- relative && compare
+	#relative <- relative && compare
 	
+	numMode <- strsplit(numMode, "-", fixed=TRUE)[[1]]
+	
+	if (compare && any(c("sdb", "sdl") %in% numMode)) message("Independence of the compared tableplots assumed for the calculation of the standard deviations.")
 	
 	if (length(fontsize)!=1 || !is.numeric(fontsize)) stop("invalid fontsize")
 
@@ -45,6 +61,11 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 		title <- ifelse(length(x$subset)==0, dataset, paste(dataset, " (", x$subset, ")", sep=""))
 	}
 	
+	if (is.na(rotateNames)) {
+		if (x$m	> 15) rotateNames <- 90 else rotateNames <- 0
+	} else if (is.logical(rotateNames)) {
+		rotateNames <- ifelse(rotateNames, 90, 0)	
+	}
 	#############################
 	## Determine colors and color scales
 	#############################
@@ -59,17 +80,27 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 	## Set layout
 	#############################
 	
+	## set grid layout
+	if (is.null(vp)) {
+		grid.newpage()
+	} else {
+		if (is.character(vp)) 
+			seekViewport(vp)
+		else pushViewport(vp)
+	}
+	
 	## configure viewports
 	marginT <- 0.01;	marginB <- 0.02
 	marginL <- 0.05;	marginR <- 0.05
 	marginLT <- 0.0;	marginLB <- 0.02
 	
+	colNameHeight <- if (rotateNames==0) 1 else max(convertWidth(stringWidth(x$select), "lines", valueOnly = TRUE)) + .5
 	vpColumn <- viewport( name="Column"
 	                   ,  x = unit(marginL, "npc")
  					    , width = unit(1 - marginL - marginR, "npc")
 	                    , layout = grid.layout( nrow=3
 						                      , ncol=1
-						                      , heights = unit(c(1, 1, legend.lines), c("lines", "null", "lines"))
+						                      , heights = unit(c(colNameHeight, 1, legend.lines), c("lines", "null", "lines"))
 						    				  )
 					   )
 						
@@ -106,15 +137,6 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 	)
 	
 	  
-	## set grid layout
-	if (is.null(vp)) {
-	  grid.newpage()
-	} else {
-	  if (is.character(vp)) 
-	    seekViewport(vp)
-	  else pushViewport(vp)
-	}
-	
 	pushViewport(vpBody)
 	
 	if (showTitle) cellplot(1, 1, e={
@@ -215,15 +237,16 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 						nameWidth <- convertWidth(stringWidth(columnName), "npc",valueOnly=TRUE)
 					}
 					
-					grid.text(columnName, gp=gpar(cex=cex))
+					grid.text(columnName, gp=gpar(cex=cex), rot=rotateNames)
 					
 					## Place sorting arrow before name
 					if (!is.na(decreasing)) {
-						grid.polygon( x = c(0.1, 0.4, 0.7)
+						#grid.rect(gp=gpar(fill="red"))
+						grid.polygon( x = c(0.1, 0.4, 0.7) / colNameHeight
 						            , y = if (decreasing) 
-										     c(0.6, 0.2, 0.6)
+										     c(0.6, 0.2, 0.6) / colNameHeight
 									      else
-							                 c(0.2, 0.6, 0.2)
+							                 c(0.2, 0.6, 0.2) / colNameHeight
 								    , gp = gpar(fill="black")
 								    , default.units = "snpc"
 								    )
@@ -231,7 +254,7 @@ function(x, fontsize = 10, legend.lines = 8, max_print_levels = 15, text_NA = "m
 				})
 			
 				if (tCol$isnumeric){
-					plotNumCol(tCol, x, vpTitle, vpGraph, vpLegend, showNumAxes, relative)
+					plotNumCol(tCol, x, vpTitle, vpGraph, vpLegend, showNumAxes, relative, numMode)
 				}
 				else {
 					plotCatCol(tCol, x, vpTitle, vpGraph, vpLegend, max_print_levels,

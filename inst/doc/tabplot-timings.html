@@ -5,6 +5,18 @@
 
 <title>Timings of Big Data visualization with <code>tabplot</code></title>
 
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
 <!-- Styles for R syntax highlighter -->
 <style type="text/css">
    pre .operator,
@@ -45,9 +57,6 @@ var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/<
 hljs.initHighlightingOnLoad();
 </script>
 
-<!-- MathJax scripts -->
-<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
 
 
 <style type="text/css">
@@ -60,6 +69,7 @@ body, td {
 body {
   max-width: 800px;
   margin: auto;
+  padding: 1em;
   line-height: 20px;
 }
 
@@ -67,28 +77,28 @@ tt, code, pre {
    font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
 }
 
-h1 { 
-   font-size:2.2em; 
+h1 {
+   font-size:2.2em;
 }
 
-h2 { 
-   font-size:1.8em; 
+h2 {
+   font-size:1.8em;
 }
 
-h3 { 
-   font-size:1.4em; 
+h3 {
+   font-size:1.4em;
 }
 
-h4 { 
-   font-size:1.0em; 
+h4 {
+   font-size:1.0em;
 }
 
-h5 { 
-   font-size:0.9em; 
+h5 {
+   font-size:0.9em;
 }
 
-h6 { 
-   font-size:0.8em; 
+h6 {
+   font-size:0.8em;
 }
 
 a:visited {
@@ -98,7 +108,9 @@ a:visited {
 pre, img {
   max-width: 100%;
 }
-
+pre {
+  overflow-x: auto;
+}
 pre code {
    display: block; padding: 0.5em;
 }
@@ -132,54 +144,54 @@ hr {
 }
 
 @media print {
-   * { 
-      background: transparent !important; 
-      color: black !important; 
-      filter:none !important; 
-      -ms-filter: none !important; 
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
    }
 
-   body { 
-      font-size:12pt; 
-      max-width:100%; 
-   }
-       
-   a, a:visited { 
-      text-decoration: underline; 
+   body {
+      font-size:12pt;
+      max-width:100%;
    }
 
-   hr { 
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
       visibility: hidden;
       page-break-before: always;
    }
 
-   pre, blockquote { 
-      padding-right: 1em; 
-      page-break-inside: avoid; 
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
    }
 
-   tr, img { 
-      page-break-inside: avoid; 
+   tr, img {
+      page-break-inside: avoid;
    }
 
-   img { 
-      max-width: 100% !important; 
+   img {
+      max-width: 100% !important;
    }
 
-   @page :left { 
-      margin: 15mm 20mm 15mm 10mm; 
-   }
-     
-   @page :right { 
-      margin: 15mm 10mm 15mm 20mm; 
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
    }
 
-   p, h2, h3 { 
-      orphans: 3; widows: 3; 
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
    }
 
-   h2, h3 { 
-      page-break-after: avoid; 
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
    }
 }
 </style>
@@ -203,12 +215,7 @@ This dataset contains 53940 records and 10 variables.</p>
 <h2>Create testdata</h2>
 
 <pre><code class="r">require(ggplot2)
-</code></pre>
-
-<pre><code>## Loading required package: ggplot2
-</code></pre>
-
-<pre><code class="r">data(diamonds)
+data(diamonds)
 ## add some NA&#39;s
 is.na(diamonds$price) &lt;- diamonds$cut == &quot;Ideal&quot;
 is.na(diamonds$cut) &lt;- (runif(nrow(diamonds)) &gt; 0.8)
@@ -223,8 +230,8 @@ diamondsff &lt;- as.ffdf(diamonds)
 nrow(diamondsff) &lt;- N
 
 # fill with identical data
-for (i in chunk(from = 1, to = N, by = n)) {
-    diamondsff[i, ] &lt;- diamonds
+for (i in chunk(from=1, to=N, by=n)){
+  diamondsff[i,] &lt;- diamonds
 }
 </code></pre>
 
@@ -232,45 +239,55 @@ for (i in chunk(from = 1, to = N, by = n)) {
 
 <p>The preparation step is the most time consuming. Per column, the rank order is determined.</p>
 
-<pre><code class="r">system.time(p &lt;- tablePrepare(diamondsff))
+<pre><code class="r">system.time(
+    p &lt;- tablePrepare(diamondsff)
+)
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   18.02    2.79   20.85
+##   19.84    2.78   23.14
 </code></pre>
 
 <h2>Create tableplots</h2>
 
 <p>To focus on the processing time of the tableplot function, the <code>plot</code> argument is set to <code>FALSE</code>.  </p>
 
-<pre><code class="r">system.time(tab &lt;- tableplot(p, plot = FALSE))
+<pre><code class="r">system.time(
+    tab &lt;- tableplot(p, plot=FALSE)
+)
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    2.89    0.80    3.78
+##    3.80    0.98    4.81
 </code></pre>
 
 <p>The following tableplots are samples with respectively 100, 1,000 and 10,000 objects per bin.</p>
 
-<pre><code class="r">system.time(tab &lt;- tableplot(p, sample = TRUE, sampleBinSize = 100, plot = FALSE))
+<pre><code class="r">system.time(
+    tab &lt;- tableplot(p, sample=TRUE, sampleBinSize=1e2, plot=FALSE)
+)
 </code></pre>
 
 <pre><code>##    user  system elapsed 
 ##    0.04    0.03    0.08
 </code></pre>
 
-<pre><code class="r">system.time(tab &lt;- tableplot(p, sample = TRUE, sampleBinSize = 1000, plot = FALSE))
+<pre><code class="r">system.time(
+    tab &lt;- tableplot(p, sample=TRUE, sampleBinSize=1e3, plot=FALSE)
+)
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    0.22    0.03    0.25
+##    0.25    0.06    0.44
 </code></pre>
 
-<pre><code class="r">system.time(tab &lt;- tableplot(p, sample = TRUE, sampleBinSize = 10000, plot = FALSE))
+<pre><code class="r">system.time(
+    tab &lt;- tableplot(p, sample=TRUE, sampleBinSize=1e4, plot=FALSE)
+)
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    1.34    0.28    1.62
+##    2.11    0.23    2.41
 </code></pre>
 
 </body>

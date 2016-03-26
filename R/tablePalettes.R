@@ -2,7 +2,7 @@
 #'
 #' All color palettes are shown and/or returned that can be used for tableplots.
 #'
-#' Sequential palettes (for numeric variables): \code{"Blues"}, \code{"Greens"}, \code{"Greys"}, \code{"Oranges"}, and \code{"Purples"}
+#' Diverging palettes (for numeric variables): \code{"RdYlBu"}, \code{"RdYlGn"}, \code{"PRGn"}, and \code{"BrBG"}
 #' These palettes are taken from ColorBrewer (Brewer et al., 2003).
 #' 
 #' Qualitative palattes (for categorical variables): \code{"Set1"}, \code{"Set2"}, \code{"Set3"},
@@ -22,7 +22,7 @@
 #'
 #' \href{alexandria.tue.nl/extra2/afstversl/wsk-i/wijffelaars2008.pdf}{Wijffelaars, M. Synthesis of Color Palettes. Master's thesis. Supervisors Wijk, J. van, and Vliegen, R. 2008}
 #'
-#' \href{http://http://CRAN.R-project.org/package=dichromat/}{Thomas Lumley (2012). dichromat: Color schemes for dichromats. R package version 1.2-4. http://CRAN.R-project.org/package=dichromat}
+#' \href{http://CRAN.R-project.org/package=dichromat/}{Thomas Lumley (2012). dichromat: Color schemes for dichromats. R package version 1.2-4. http://CRAN.R-project.org/package=dichromat}
 #' 
 #' \href{http://statmath.wu.ac.at/~zeileis/papers/Zeileis+Hornik+Murrell-2009.pdf}{Zeileis, A., Hornik, K.,  and Murrell, P.  Escaping RGBland: Selecting colors for statistical graphics.  In Proceedings of Computational Statistics & Data Analysis. 2009, 3259-3270.}
 #' @export
@@ -30,7 +30,7 @@
 tablePalettes <- function(plot = TRUE) {
 	#require(grid)
 	if (plot) {
-		tpal <- c(list(sequential=NA), tabplotPalettes$seq, list(qualitative=NA), tabplotPalettes$qual)
+		tpal <- c(list(diverging=NA), tabplotPalettes$div, list(qualitative=NA), tabplotPalettes$qual)
 		
 		k <- length(tpal)
 		ncols <- max(sapply(tpal,FUN=length))

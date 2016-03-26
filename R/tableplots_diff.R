@@ -11,22 +11,36 @@
 #' @example ../examples/tableplots_diff.R
 #' @export
 "-.tabplot" <- function(tp1, tp2) {
-	stopifnot(all(tp1$select==tp2$select),
-			  tp1$nBins==tp2$nBins,
+	stopifnot(tp1$nBins==tp2$nBins,
 			  tp1$sortCol==tp2$sortCol)
+	
+	if (!all(tp1$select==tp2$select)) warning("Column names are not equal")
 	
 	tp <- tp1
 	midspace <- .05
 	tp$columns <- mapply(function(col1, col2) {
+		if (col1$type=="compare" || col2$type=="compare") stop("Cannot create comparison tableplot of tableplots with comparison columns")
 		col <- col1
 		if (col1$isnumeric) {
 			col$mean1 <- col1$mean
 			col$mean2 <- col2$mean
-			col$mean.diff <- col$mean <- col2$mean - col1$mean
-			col$mean.diff.rel <- col$mean <- ((col2$mean - col1$mean) / col1$mean)*100
+			col$mean.diff <- col1$mean - col2$mean
+			col$mean.diff.rel <- ((col1$mean - col2$mean) / col1$mean)*100
+			
+			col$sd1 <- col1$sd
+			col$sd2 <- col2$sd
+			col$sd.diff <- sqrt(col1$sd^2 + col2$sd^2)
+			col$sd.diff.rel <- col$sd.diff / col1$mean * 100
+			
+			col$x1.diff <- col$mean.diff - col$sd.diff
+			col$x2.diff <- col$mean.diff + col$sd.diff
+
+			col$x1.diff.rel <- col$mean.diff.rel - col$sd.diff.rel
+			col$x2.diff.rel <- col$mean.diff.rel + col$sd.diff.rel
+			
 			col$scale_init <- "lin"
 			col$compl <- pmin(col1$compl, col2$compl)
-			col[c("mean", "scale_final", "mean.scaled", "brokenX", "mean.diff.coor", "marks.labels", "marks.x", "xline", "widths")] <- NULL
+			col[c("mean", "sd", "scale_final", "mean.scaled", "brokenX", "mean.diff.coor", "marks.labels", "marks.x", "xline", "widths", "x1", "x2")] <- NULL
 		} else {
 			
 # 			col <- tp$columns[[4]]
@@ -36,7 +50,7 @@
 			col$freq1 <- col1$freq
 			col$freq2 <- col2$freq
 			
-			freq <- col$freq.diff <- col2$freq - col1$freq
+			freq <- col$freq.diff <- col1$freq - col2$freq
 			xinit <- apply(freq, MARGIN=1, function(x)sum(x[x<0]))
 			
 			ids <- t(apply(freq, MARGIN=1, orderRow))
@@ -66,9 +80,10 @@
 			
 			col$freq <- NULL
 		}
+		col$type <- "compare"
 		col
 	}, tp1$columns, tp2$columns, SIMPLIFY=FALSE)
-	
+	#browser()
 	isNumber <- sapply(tp$columns, function(col) col$isnumeric)
 	
 
