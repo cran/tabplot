@@ -19,8 +19,8 @@ diamondsff <- as.ffdf(diamonds)
 nrow(diamondsff) <- N
 
 # fill with identical data
-for (i in chunk(from=1, to=N, by=n)){
-  diamondsff[i,] <- diamonds
+for (i in chunk(diamondsff, by=n)){
+  diamondsff[i,] <- as.data.frame(diamonds)
 }
 
 ## ----message=FALSE-------------------------------------------------------

@@ -18,10 +18,5 @@
 #' @docType package
 #' @author Martijn Tennekes \email{mtennekes@@gmail.com} and Edwin de Jonge
 #' @keywords visualization large datasets
-#' @example ../examples/pkg.R
+#' @example ./examples/pkg.R
 {}
-
-.onAttach <- function(...) {
-	packageStartupMessage("Standard deviations are plot by default. See argument numMode of plot.tabplot.")
-}
-

@@ -215,7 +215,12 @@ This dataset contains 53940 records and 10 variables.</p>
 <h2>Create testdata</h2>
 
 <pre><code class="r">require(ggplot2)
-data(diamonds)
+</code></pre>
+
+<pre><code>## Loading required package: ggplot2
+</code></pre>
+
+<pre><code class="r">data(diamonds)
 ## add some NA&#39;s
 is.na(diamonds$price) &lt;- diamonds$cut == &quot;Ideal&quot;
 is.na(diamonds$cut) &lt;- (runif(nrow(diamonds)) &gt; 0.8)
@@ -230,8 +235,8 @@ diamondsff &lt;- as.ffdf(diamonds)
 nrow(diamondsff) &lt;- N
 
 # fill with identical data
-for (i in chunk(from=1, to=N, by=n)){
-  diamondsff[i,] &lt;- diamonds
+for (i in chunk(diamondsff, by=n)){
+  diamondsff[i,] &lt;- as.data.frame(diamonds)
 }
 </code></pre>
 
@@ -245,7 +250,7 @@ for (i in chunk(from=1, to=N, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   19.84    2.78   23.14
+##   18.91    2.83   22.13
 </code></pre>
 
 <h2>Create tableplots</h2>
@@ -258,7 +263,7 @@ for (i in chunk(from=1, to=N, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    3.80    0.98    4.81
+##    2.83    1.16    4.06
 </code></pre>
 
 <p>The following tableplots are samples with respectively 100, 1,000 and 10,000 objects per bin.</p>
@@ -269,7 +274,7 @@ for (i in chunk(from=1, to=N, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    0.04    0.03    0.08
+##    0.04    0.03    0.07
 </code></pre>
 
 <pre><code class="r">system.time(
@@ -278,7 +283,7 @@ for (i in chunk(from=1, to=N, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    0.25    0.06    0.44
+##    0.22    0.07    0.28
 </code></pre>
 
 <pre><code class="r">system.time(
@@ -287,7 +292,7 @@ for (i in chunk(from=1, to=N, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##    2.11    0.23    2.41
+##    1.63    0.38    2.02
 </code></pre>
 
 </body>
