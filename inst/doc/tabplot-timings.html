@@ -220,13 +220,6 @@ This dataset contains 53940 records and 10 variables.</p>
 <pre><code>## Loading required package: ggplot2
 </code></pre>
 
-<pre><code>## Registered S3 methods overwritten by &#39;ggplot2&#39;:
-##   method         from 
-##   [.quosures     rlang
-##   c.quosures     rlang
-##   print.quosures rlang
-</code></pre>
-
 <pre><code class="r">data(diamonds)
 ## add some NA&#39;s
 is.na(diamonds$price) &lt;- diamonds$cut == &quot;Ideal&quot;
@@ -257,7 +250,7 @@ for (i in chunk(diamondsff, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   16.95    3.03   20.31
+##  19.471   3.942  23.510
 </code></pre>
 
 <h2>Create tableplots</h2>
@@ -270,7 +263,7 @@ for (i in chunk(diamondsff, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   2.658   0.403   3.072
+##   3.000   0.432   3.434
 </code></pre>
 
 <p>The following tableplots are samples with respectively 100, 1,000 and 10,000 objects per bin.</p>
@@ -281,7 +274,7 @@ for (i in chunk(diamondsff, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.030   0.017   0.047
+##   0.037   0.013   0.049
 </code></pre>
 
 <pre><code class="r">system.time(
@@ -290,7 +283,7 @@ for (i in chunk(diamondsff, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.159   0.051   0.211
+##   0.164   0.064   0.228
 </code></pre>
 
 <pre><code class="r">system.time(
@@ -299,7 +292,7 @@ for (i in chunk(diamondsff, by=n)){
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   1.274   0.043   1.317
+##   1.302   0.060   1.362
 </code></pre>
 
 </body>
